@@ -1,58 +1,24 @@
 version: '3.8'
 
 services:
-  # Base de datos MongoDB
-  mongodb:
-    image: mongo:7.0
-    container_name: asistencia-mongodb
-    restart: always
-    environment:
-      MONGO_INITDB_DATABASE: asistencia_unicordoba
-    volumes:
-      - mongodb_data:/data/db
-      - mongodb_config:/data/configdb
-    networks:
-      - asistencia-network
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/asistencia_unicordoba --quiet
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-
   # Backend API
   backend:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: asistencia-backend
-    restart: always
-    ports:
-      - "3100:3000"
+    restart: unless-stopped
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - MONGODB_URI=mongodb://mongodb:27017/asistencia_unicordoba
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-3100}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:z9j1v3up0jmsgzge@72.62.173.113:27017/asistencia_unicordoba}
       - JWT_SECRET=${JWT_SECRET}
-      - SERVER_URL=https://asistencia-unicor-api.bambai.tech
+      - SERVER_URL=${SERVER_URL:-https://asistencia-unicor-api.bambai.dev}
+    ports:
+      - "3100:${PORT:-3100}"
     volumes:
       - uploads_data:/app/uploads
-    depends_on:
-      mongodb:
-        condition: service_healthy
     networks:
-      - asistencia-network
-    # healthcheck:
-    #   test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 40s
+      - dokploy-network
     logging:
       driver: "json-file"
       options:
@@ -65,15 +31,12 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://asistencia-unicor-api.bambai.tech/api
-    container_name: asistencia-frontend
-    restart: always
+        - VITE_API_URL=${VITE_API_URL:-https://asistencia-unicor-api.bambai.dev/api}
+    restart: unless-stopped
     ports:
       - "8081:80"
-    depends_on:
-      - backend
     networks:
-      - asistencia-network
+      - dokploy-network
     logging:
       driver: "json-file"
       options:
@@ -81,17 +44,10 @@ services:
         max-file: "5"
 
 volumes:
-  mongodb_data:
-    driver: local
-    name: asistencia_mongodb_data
-  mongodb_config:
-    driver: local
-    name: asistencia_mongodb_config
   uploads_data:
     driver: local
     name: asistencia_uploads_data
 
 networks:
-  asistencia-network:
-    driver: bridge
-    name: asistencia_network
+  dokploy-network:
+    external: true
