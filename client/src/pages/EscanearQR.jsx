@@ -31,6 +31,7 @@ const EscanearQR = () => {
   const [procesando, setProcesando] = useState(false)
   const scannerRef = useRef(null)
   const qrScannerRef = useRef(null)
+  const procesamientoLock = useRef(false)
 
   useEffect(() => {
     loadEventos()
@@ -155,14 +156,18 @@ const EscanearQR = () => {
   }
 
   const onScanSuccess = async (decodedText) => {
-    // Evitar escaneos múltiples mientras se procesa uno
-    if (procesando) {
+    // Evitar escaneos múltiples síncronamente mientras se procesa uno
+    if (procesamientoLock.current) {
       return
     }
 
+    procesamientoLock.current = true
+    setProcesando(true)
+
+    // Detener escáner INMEDIATAMENTE de la pantalla para cortar la cámara en el acto
+    detenerEscaneo()
+
     try {
-      setProcesando(true)
-      
       // El código QR debe ser el código del carnet del estudiante
       const codigoCarnet = decodedText.trim()
 
@@ -171,9 +176,6 @@ const EscanearQR = () => {
         evento_id: eventoSeleccionado,
         codigo_carnet: codigoCarnet
       })
-
-      // Detener escáner apenas respondemos
-      detenerEscaneo()
 
       if (response.success) {
         setUltimoEscaneado({
@@ -209,14 +211,15 @@ const EscanearQR = () => {
         }
 
         setProcesando(false)
+        procesamientoLock.current = false
       } else {
         setProcesando(false)
+        procesamientoLock.current = false
       }
     } catch (error) {
-      // Detener el escáner si da error también (ej: ya registrado)
-      detenerEscaneo()
-      
       setProcesando(false)
+      procesamientoLock.current = false
+
       setUltimoEscaneado({
         success: false,
         mensaje: error.message || 'Error al registrar asistencia',
