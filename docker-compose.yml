@@ -10,7 +10,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3100}
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:z9j1v3up0jmsgzge@72.62.173.113:27017/asistencia_unicordoba}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:z9j1v3up0jmsgzge@72.62.173.113:27017/asistencia_unicordoba?authSource=admin}
       - JWT_SECRET=${JWT_SECRET}
       - SERVER_URL=${SERVER_URL:-https://asistencia-unicor-api.bambai.dev}
     ports:
