@@ -27,7 +27,7 @@ iniciarWorker();
 
 // Configuración de CORS
 const corsOptions = {
-	origin: "*",
+	origin: true,
 	credentials: true,
 	optionsSuccessStatus: 200,
 };

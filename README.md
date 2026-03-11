@@ -8,8 +8,8 @@ Sistema de gestión de asistencia a eventos con ESP32, React y Node.js.
 
 - Docker y Docker Compose instalados
 - Dominios configurados:
-  - `asistencia-unicor-web.bambai.tech` → Frontend
-  - `asistencia-unicor-api.bambai.tech` → Backend
+  - `asistencia-unicor.bambai.dev` → Frontend
+  - `asistencia-unicor-api.bambai.dev` → Backend
 
 ### Configuración
 
@@ -20,7 +20,7 @@ Backend (`server/.env`):
 ```env
 PORT=3000
 NODE_ENV=production
-SERVER_URL=https://asistencia-unicor-api.bambai.tech
+SERVER_URL=https://asistencia-unicor-api.bambai.dev
 MONGODB_URI=mongodb://mongodb:27017/asistencia_unicordoba
 JWT_SECRET=tu_secreto_super_seguro_aqui
 ```
@@ -28,7 +28,7 @@ JWT_SECRET=tu_secreto_super_seguro_aqui
 Frontend (`client/.env`):
 
 ```env
-VITE_API_URL=https://asistencia-unicor-api.bambai.tech/api
+VITE_API_URL=https://asistencia-unicor-api.bambai.dev/api
 ```
 
 2. **Generar JWT_SECRET seguro**
@@ -78,7 +78,7 @@ docker exec asistencia-mongodb mongodump --db=asistencia_unicordoba --out=/backu
 ```nginx
 server {
     listen 80;
-    server_name asistencia-unicor-web.bambai.tech;
+    server_name asistencia-unicor.bambai.dev;
 
     location / {
         proxy_pass http://localhost:8081;
@@ -93,7 +93,7 @@ server {
 ```nginx
 server {
     listen 80;
-    server_name asistencia-unicor-api.bambai.tech;
+    server_name asistencia-unicor-api.bambai.dev;
     client_max_body_size 50M;
 
     location / {
@@ -107,8 +107,8 @@ server {
 ### Obtener SSL
 
 ```bash
-certbot --nginx -d asistencia-unicor-web.bambai.tech
-certbot --nginx -d asistencia-unicor-api.bambai.tech
+certbot --nginx -d asistencia-unicor.bambai.dev
+certbot --nginx -d asistencia-unicor-api.bambai.dev
 ```
 
 ## 📦 Estructura
@@ -159,7 +159,7 @@ const char* dispositivo_codigo = "ESP001"; // Cambiar por ESP002, ESP003, etc.
 4. **La URL ya está configurada** para producción:
 
 ```cpp
-const char* serverUrl = "https://asistencia-unicor-api.bambai.tech/api/asistencia/registrar";
+const char* serverUrl = "https://asistencia-unicor-api.bambai.dev/api/asistencia/registrar";
 ```
 
 ### Requisitos

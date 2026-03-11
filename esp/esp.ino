@@ -19,7 +19,7 @@
 /* ======================================== WiFi credentials */
 const char* ssid = "INTERNET";           // Cambia por tu red WiFi
 const char* password = "123456789"; // Cambia por tu contraseña WiFi
-const char* serverUrl = "https://asistencia-unicor-api.bambai.tech/api/asistencia/registrar"; // URL de producción
+const char* serverUrl = "https://asistencia-unicor-api.bambai.dev/api/asistencia/registrar"; // URL de producción
 const char* dispositivo_codigo = "ESP001";   // Código único del dispositivo (cambiar según el dispositivo)
 /* ======================================== */
 

@@ -41,7 +41,7 @@ Este código debe estar registrado previamente en el sistema web en la sección 
 El código ya está configurado para producción:
 
 ```cpp
-const char* serverUrl = "https://asistencia-unicor-api.bambai.tech/api/asistencia/registrar";
+const char* serverUrl = "https://asistencia-unicor-api.bambai.dev/api/asistencia/registrar";
 ```
 
 ## 📥 Instalación en Arduino IDE
