@@ -177,12 +177,11 @@ const EscanearQR = () => {
           fecha: new Date()
         })
 
-        notifications.show({
-          title: 'Asistencia Registrada',
-          message: `${response.estudiante.nombre}`,
-          color: 'green',
-          autoClose: 2500
-        })
+        // Auto-limpiar el mensaje después de 4 segundos
+        if (window.scanTimeoutId) clearTimeout(window.scanTimeoutId)
+        window.scanTimeoutId = setTimeout(() => {
+          setUltimoEscaneado(null)
+        }, 4000)
 
         // Vibración de éxito en móviles
         if (navigator.vibrate) {
@@ -225,12 +224,11 @@ const EscanearQR = () => {
         fecha: new Date()
       })
 
-      notifications.show({
-        title: 'Error',
-        message: error.message || 'No se pudo registrar la asistencia',
-        color: 'red',
-        autoClose: 4000
-      })
+      // Auto-limpiar el mensaje después de 4 segundos
+      if (window.scanTimeoutId) clearTimeout(window.scanTimeoutId)
+      window.scanTimeoutId = setTimeout(() => {
+        setUltimoEscaneado(null)
+      }, 4000)
 
       // Vibración de error en móviles
       if (navigator.vibrate) {
