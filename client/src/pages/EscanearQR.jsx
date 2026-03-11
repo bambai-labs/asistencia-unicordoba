@@ -71,6 +71,8 @@ const EscanearQR = () => {
       return
     }
 
+    setUltimoEscaneado(null)
+
     try {
       // Verificar si estamos en un contexto seguro
       const isSecureContext = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost'
@@ -170,18 +172,15 @@ const EscanearQR = () => {
         codigo_carnet: codigoCarnet
       })
 
+      // Detener escáner apenas respondemos
+      detenerEscaneo()
+
       if (response.success) {
         setUltimoEscaneado({
           success: true,
           estudiante: response.estudiante,
           fecha: new Date()
         })
-
-        // Auto-limpiar el mensaje después de 4 segundos
-        if (window.scanTimeoutId) clearTimeout(window.scanTimeoutId)
-        window.scanTimeoutId = setTimeout(() => {
-          setUltimoEscaneado(null)
-        }, 4000)
 
         // Vibración de éxito en móviles
         if (navigator.vibrate) {
@@ -209,26 +208,20 @@ const EscanearQR = () => {
           console.log('No se pudo reproducir el sonido')
         }
 
-        // Esperar 2 segundos antes de permitir otro escaneo
-        setTimeout(() => {
-          setProcesando(false)
-        }, 2000)
+        setProcesando(false)
       } else {
         setProcesando(false)
       }
     } catch (error) {
+      // Detener el escáner si da error también (ej: ya registrado)
+      detenerEscaneo()
+      
       setProcesando(false)
       setUltimoEscaneado({
         success: false,
         mensaje: error.message || 'Error al registrar asistencia',
         fecha: new Date()
       })
-
-      // Auto-limpiar el mensaje después de 4 segundos
-      if (window.scanTimeoutId) clearTimeout(window.scanTimeoutId)
-      window.scanTimeoutId = setTimeout(() => {
-        setUltimoEscaneado(null)
-      }, 4000)
 
       // Vibración de error en móviles
       if (navigator.vibrate) {
@@ -335,7 +328,7 @@ const EscanearQR = () => {
               size="lg"
               fullWidth
             >
-              Iniciar Escaneo
+              {ultimoEscaneado ? "Registrar Nueva Asistencia" : "Iniciar Escaneo"}
             </Button>
           ) : (
             <Button
