@@ -26,14 +26,12 @@ connectDB();
 iniciarWorker();
 
 // Configuración de CORS
-const corsOptions = {
-	origin: true,
-	credentials: true,
-	optionsSuccessStatus: 200,
-};
+app.use(cors({
+	origin: "*",
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+}));
 
-// Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
