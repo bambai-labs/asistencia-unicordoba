@@ -22,9 +22,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url || ''
+    const esLogin = url.endsWith('/auth/login')
+    if (error.response?.status === 401 && !esLogin) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error.response?.data || error.message)
   }
