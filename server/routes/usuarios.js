@@ -179,22 +179,20 @@ router.put('/:id', esCoordinadorOSuperior, async (req, res) => {
       }
     }
 
-    const updateData = {};
-    if (nombre) updateData.nombre = nombre;
-    if (apellidos) updateData.apellidos = apellidos;
-    if (cedula) updateData.cedula = cedula;
-    if (cargo) updateData.cargo = cargo;
-    if (area && req.usuario.rol === 'administrador') updateData.area = area;
-    if (usuario) updateData.usuario = usuario;
-    if (contrasena) updateData.contrasena = contrasena;
-    if (rol && req.usuario.rol === 'administrador') updateData.rol = rol;
-    if (typeof activo !== 'undefined') updateData.activo = activo;
+    if (nombre) usuarioAActualizar.nombre = nombre;
+    if (apellidos) usuarioAActualizar.apellidos = apellidos;
+    if (cedula) usuarioAActualizar.cedula = cedula;
+    if (cargo) usuarioAActualizar.cargo = cargo;
+    if (area && req.usuario.rol === 'administrador') usuarioAActualizar.area = area;
+    if (usuario) usuarioAActualizar.usuario = usuario;
+    if (contrasena) usuarioAActualizar.contrasena = contrasena;
+    if (rol && req.usuario.rol === 'administrador') usuarioAActualizar.rol = rol;
+    if (typeof activo !== 'undefined') usuarioAActualizar.activo = activo;
 
-    const usuarioActualizado = await Usuario.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    ).select('-contrasena');
+    await usuarioAActualizar.save();
+
+    const usuarioActualizado = usuarioAActualizar.toObject();
+    delete usuarioActualizado.contrasena;
 
     res.json({
       success: true,
