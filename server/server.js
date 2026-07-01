@@ -3,27 +3,22 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const dayjs = require("dayjs");
-const connectDB = require("./config/database");
+const { connectDB } = require("./config/database");
 const { iniciarWorker } = require("./workers/finalizarEventos");
 
 // Importar rutas
 const authRoutes = require("./routes/auth");
 const usuariosRoutes = require("./routes/usuarios");
 const estudiantesRoutes = require("./routes/estudiantes");
-const dispositivosRoutes = require("./routes/dispositivos");
 const eventosRoutes = require("./routes/eventos");
 const asistenciaRoutes = require("./routes/asistencia");
 const uploadRoutes = require("./routes/upload");
 const areasRoutes = require("./routes/areas");
 
+require('./models/index');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Conectar a MongoDB
-connectDB();
-
-// Iniciar worker de finalización de eventos
-iniciarWorker();
 
 // Configuración de CORS
 app.use(cors({
@@ -50,7 +45,6 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/estudiantes", estudiantesRoutes);
-app.use("/api/dispositivos", dispositivosRoutes);
 app.use("/api/eventos", eventosRoutes);
 app.use("/api/asistencia", asistenciaRoutes);
 app.use("/api/upload", uploadRoutes);
@@ -78,13 +72,6 @@ app.get("/", (req, res) => {
 				"GET /api/estudiantes/codigo/:codigo":
 					"Buscar por código de carnet (autenticado)",
 				"PUT /api/estudiantes/:id": "Actualizar estudiante (autenticado)",
-			},
-			Dispositivos: {
-				"POST /api/dispositivos": "Crear dispositivo (autenticado)",
-				"GET /api/dispositivos": "Listar dispositivos (autenticado)",
-				"GET /api/dispositivos/:id": "Obtener dispositivo (autenticado)",
-				"PUT /api/dispositivos/:id": "Actualizar dispositivo (autenticado)",
-				"DELETE /api/dispositivos/:id": "Eliminar dispositivo (autenticado)",
 			},
 			Eventos: {
 				"POST /api/eventos": "Crear evento (autenticado)",
@@ -144,18 +131,29 @@ app.use((err, req, res, next) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, "0.0.0.0", () => {
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-	console.log("🎓 Sistema de Asistencia - Unicordoba");
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-	console.log(`📡 Servidor escuchando en puerto: ${PORT}`);
-	console.log(`🌐 URL: http://localhost:${PORT}`);
-	console.log(`🗄️  Base de datos: ${process.env.MONGODB_URI}`);
-	console.log(`📁 Archivos estáticos: /uploads`);
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-	console.log("\n📝 Comandos disponibles:");
-	console.log("   npm start          - Iniciar servidor");
-	console.log("   npm run dev        - Modo desarrollo con nodemon");
-	console.log("   npm run sync       - Sincronizar estudiantes desde CSV");
-	console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-});
+const iniciarServidor = async () => {
+  try {
+    await connectDB();
+    iniciarWorker();
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("🎓 Sistema de Asistencia - Unicordoba");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log(`📡 Servidor escuchando en puerto: ${PORT}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🗄️  Base de datos: PostgreSQL`);
+      console.log(`📁 Archivos estáticos: /uploads`);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("\n📝 Comandos disponibles:");
+      console.log("   npm start          - Iniciar servidor");
+      console.log("   npm run dev        - Modo desarrollo con nodemon");
+      console.log("   npm run sync       - Sincronizar estudiantes desde API");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    });
+  } catch (error) {
+    console.error("❌ Error al iniciar el servidor:", error);
+    process.exit(1);
+  }
+};
+
+iniciarServidor();

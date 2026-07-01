@@ -1,75 +1,26 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const estudianteSchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  tipo_identificacion: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  identificacion: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  codigo_carnet: {
-    type: String,
-    required: true,
-    uppercase: true,
-    trim: true
-  },
-  email: {
-    type: String,
-    required: true,
-    lowercase: true,
-    trim: true
-  },
-  tipo_vinculacion: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  facultad: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  programa: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  sem: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  circunscripcion: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  periodo: {
-    type: String,
-    required: true,
-    trim: true,
-    // Formato: "2025-II", "2026-I"
-  },
-  activo: {
-    type: Boolean,
-    default: true
-  }
+const Estudiante = sequelize.define('Estudiante', {
+  nombre:            { type: DataTypes.STRING, allowNull: false },
+  tipo_identificacion: { type: DataTypes.STRING, allowNull: false },
+  identificacion:    { type: DataTypes.STRING, allowNull: false },
+  codigo_carnet:     { type: DataTypes.STRING, allowNull: false },
+  email:             { type: DataTypes.STRING, allowNull: false },
+  tipo_vinculacion:  { type: DataTypes.STRING, defaultValue: '' },
+  facultad:          { type: DataTypes.STRING, defaultValue: '' },
+  programa:          { type: DataTypes.STRING, defaultValue: '' },
+  sem:               { type: DataTypes.STRING, defaultValue: '' },
+  circunscripcion:   { type: DataTypes.STRING, defaultValue: '' },
+  periodo:           { type: DataTypes.STRING, allowNull: false },
+  activo:            { type: DataTypes.BOOLEAN, defaultValue: true }
 }, {
-  timestamps: true
+  tableName: 'estudiantes',
+  underscored: true,
+  indexes: [
+    { unique: true, fields: ['codigo_carnet', 'periodo'] },
+    { unique: true, fields: ['identificacion', 'periodo'] }
+  ]
 });
 
-// Índice compuesto único por código de carnet y periodo
-estudianteSchema.index({ codigo_carnet: 1, periodo: 1 }, { unique: true });
-// Índice compuesto único por identificación y periodo
-estudianteSchema.index({ identificacion: 1, periodo: 1 }, { unique: true });
-
-module.exports = mongoose.model('Estudiante', estudianteSchema);
+module.exports = Estudiante;

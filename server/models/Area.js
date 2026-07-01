@@ -1,39 +1,12 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const areaSchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
-  descripcion: {
-    type: String,
-    trim: true
-  },
-  codigo: {
-    type: String,
-    required: true,
-    unique: true,
-    uppercase: true,
-    trim: true
-  },
-  color: {
-    type: String,
-    default: '#4CAF50',
-    trim: true
-  },
-  activo: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
+const Area = sequelize.define('Area', {
+  nombre:      { type: DataTypes.STRING, allowNull: false, unique: true },
+  descripcion: { type: DataTypes.TEXT },
+  codigo:      { type: DataTypes.STRING, allowNull: false, unique: true },
+  color:       { type: DataTypes.STRING, defaultValue: '#4CAF50' },
+  activo:      { type: DataTypes.BOOLEAN, defaultValue: true }
+}, { tableName: 'areas', underscored: true });
 
-// Índice para búsquedas
-areaSchema.index({ nombre: 1 });
-areaSchema.index({ codigo: 1 });
-
-module.exports = mongoose.model('Area', areaSchema);
-
+module.exports = Area;

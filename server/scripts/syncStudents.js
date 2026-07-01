@@ -2,29 +2,24 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
-const mongoose = require('mongoose');
-const Estudiante = require('../models/Estudiante');
+const { connectDB, sequelize } = require('../config/database');
+const { Estudiante } = require('../models/index');
 
 const CSV_PATH = path.join(__dirname, '../../estudiantes.csv');
 
 async function syncStudents() {
   try {
-    // Conectar a MongoDB
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('✅ Conectado a MongoDB');
+    await connectDB();
+    console.log('✅ Conectado a PostgreSQL');
 
     if (!fs.existsSync(CSV_PATH)) {
       console.error('❌ Archivo estudiantes.csv no encontrado en:', CSV_PATH);
       process.exit(1);
     }
 
-    // Solicitar periodo
     const readline = require('readline');
     const rl = readline.createInterface({
-      input: process.stdin,
+      input:  process.stdin,
       output: process.stdout
     });
 
@@ -43,13 +38,12 @@ async function syncStudents() {
     console.log(`📅 Sincronizando para el periodo: ${periodo}\n`);
 
     const estudiantes = [];
-    let lineCount = 0;
+    let lineCount  = 0;
     let errorCount = 0;
 
-    // Leer el CSV
     await new Promise((resolve, reject) => {
       fs.createReadStream(CSV_PATH, { encoding: 'utf8' })
-        .pipe(csv({ 
+        .pipe(csv({
           separator: ';',
           skipLines: 0,
           mapHeaders: ({ header }) => header.replace(/^\uFEFF/, '').trim()
@@ -57,22 +51,20 @@ async function syncStudents() {
         .on('data', (row) => {
           lineCount++;
           try {
-            // Validar que tiene los campos requeridos
-            if (row.nombre && row.tipo_identificacion && row.identificacion && 
+            if (row.nombre && row.tipo_identificacion && row.identificacion &&
                 row.codigo_carnet && row.email) {
-              
               estudiantes.push({
-                nombre: row.nombre.trim(),
+                nombre:              row.nombre.trim(),
                 tipo_identificacion: row.tipo_identificacion.trim(),
-                identificacion: row.identificacion.trim(),
-                codigo_carnet: row.codigo_carnet.trim().toUpperCase(),
-                email: row.email.trim().toLowerCase(),
-                tipo_vinculacion: row.tipo_vinculacion ? row.tipo_vinculacion.trim() : '',
-                facultad: row.facultad ? row.facultad.trim() : '',
-                programa: row.programa ? row.programa.trim() : '',
-                sem: row.sem ? row.sem.trim() : '',
-                circunscripcion: row.circunscripcion ? row.circunscripcion.trim() : '',
-                periodo: periodo,
+                identificacion:      row.identificacion.trim(),
+                codigo_carnet:       row.codigo_carnet.trim().toUpperCase(),
+                email:               row.email.trim().toLowerCase(),
+                tipo_vinculacion:    row.tipo_vinculacion  ? row.tipo_vinculacion.trim()  : '',
+                facultad:            row.facultad          ? row.facultad.trim()          : '',
+                programa:            row.programa          ? row.programa.trim()          : '',
+                sem:                 row.sem               ? row.sem.trim()               : '',
+                circunscripcion:     row.circunscripcion   ? row.circunscripcion.trim()   : '',
+                periodo,
                 activo: true
               });
             } else {
@@ -84,55 +76,57 @@ async function syncStudents() {
             errorCount++;
           }
         })
-        .on('end', resolve)
+        .on('end',   resolve)
         .on('error', reject);
     });
 
     console.log(`\n📊 Resumen de lectura del CSV:`);
     console.log(`   Total líneas leídas: ${lineCount}`);
     console.log(`   Estudiantes válidos: ${estudiantes.length}`);
-    console.log(`   Errores/Omitidos: ${errorCount}\n`);
+    console.log(`   Errores/Omitidos:   ${errorCount}\n`);
 
     if (estudiantes.length === 0) {
       console.log('⚠️  No hay estudiantes para sincronizar');
-      await mongoose.connection.close();
+      await sequelize.close();
       process.exit(0);
     }
 
-    // Sincronizar con MongoDB usando bulkWrite para mejor rendimiento
-    console.log('🔄 Sincronizando estudiantes con MongoDB...\n');
+    console.log('🔄 Sincronizando estudiantes con PostgreSQL...\n');
 
-    const bulkOps = estudiantes.map(estudiante => ({
-      updateOne: {
-        filter: { 
-          codigo_carnet: estudiante.codigo_carnet,
-          periodo: estudiante.periodo
-        },
-        update: { $set: estudiante },
-        upsert: true
+    let insertados  = 0;
+    let actualizados = 0;
+    let errores     = 0;
+
+    for (const estudiante of estudiantes) {
+      try {
+        const [, created] = await Estudiante.upsert(estudiante, {
+          conflictFields: ['codigo_carnet', 'periodo']
+        });
+        if (created) insertados++;
+        else actualizados++;
+      } catch (error) {
+        console.error(`❌ Error con ${estudiante.codigo_carnet}:`, error.message);
+        errores++;
       }
-    }));
-
-    const result = await Estudiante.bulkWrite(bulkOps);
+    }
 
     console.log('✅ Sincronización completada:');
-    console.log(`   Insertados: ${result.upsertedCount}`);
-    console.log(`   Actualizados: ${result.modifiedCount}`);
+    console.log(`   Insertados:       ${insertados}`);
+    console.log(`   Actualizados:     ${actualizados}`);
+    console.log(`   Errores:          ${errores}`);
     console.log(`   Total procesados: ${estudiantes.length}`);
 
-    // Estadísticas adicionales
-    const totalEnDB = await Estudiante.countDocuments();
+    const totalEnDB = await Estudiante.count();
     console.log(`\n📈 Total de estudiantes en la base de datos: ${totalEnDB}`);
 
-    await mongoose.connection.close();
+    await sequelize.close();
     console.log('\n✅ Proceso finalizado. Conexión cerrada.');
 
   } catch (error) {
     console.error('❌ Error durante la sincronización:', error);
-    await mongoose.connection.close();
+    await sequelize.close();
     process.exit(1);
   }
 }
 
-// Ejecutar sincronización
 syncStudents();

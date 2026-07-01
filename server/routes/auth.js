@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const Usuario = require('../models/Usuario');
+const { Usuario } = require('../models/index');
 const { verificarToken } = require('../middleware/auth');
 
 // Login
@@ -16,7 +16,9 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = await Usuario.findOne({ usuario, activo: true });
+    const user = await Usuario.findOne({ 
+      where: { usuario, activo: true } 
+    });
     
     if (!user) {
       return res.status(401).json({ 
@@ -35,7 +37,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, rol: user.rol }, 
+      { id: user.id, rol: user.rol }, 
       process.env.JWT_SECRET, 
       { expiresIn: '24h' }
     );
@@ -45,7 +47,7 @@ router.post('/login', async (req, res) => {
       message: 'Login exitoso',
       token,
       usuario: {
-        id: user._id,
+        id: user.id,
         usuario: user.usuario,
         rol: user.rol
       }
@@ -65,7 +67,7 @@ router.get('/me', verificarToken, async (req, res) => {
   res.json({
     success: true,
     usuario: {
-      id: req.usuario._id,
+      id: req.usuario.id,
       usuario: req.usuario.usuario,
       rol: req.usuario.rol
     }

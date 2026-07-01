@@ -1,16 +1,25 @@
-const mongoose = require('mongoose');
+const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  logging: false,
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+});
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('✅ MongoDB conectado exitosamente');
+    await sequelize.authenticate();
+    console.log('✅ PostgreSQL conectado exitosamente');
+    await sequelize.sync({ alter: true }); // crea/actualiza tablas automáticamente
   } catch (error) {
-    console.error('❌ Error conectando a MongoDB:', error.message);
+    console.error('❌ Error conectando a PostgreSQL:', error.message);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+module.exports = { sequelize, connectDB };

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Estudiante = require('../models/Estudiante');
+const { Op } = require('sequelize');
+const { sequelize } = require('../config/database');
+const { Estudiante } = require('../models/index');
 const { verificarToken } = require('../middleware/auth');
 const multer = require('multer');
 const ExcelJS = require('exceljs');
@@ -12,11 +14,12 @@ router.use(verificarToken);
 // Obtener periodos disponibles
 router.get('/periodos', async (req, res) => {
   try {
-    const periodos = await Estudiante.distinct('periodo');
-    res.json({
-      success: true,
-      periodos: periodos.sort().reverse() // Más recientes primero
+    const resultados = await Estudiante.findAll({
+      attributes: [[sequelize.fn('DISTINCT', sequelize.col('periodo')), 'periodo']],
+      order: [['periodo', 'DESC']]
     });
+    const periodos = resultados.map(r => r.periodo);
+    res.json({ success: true, periodos });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
@@ -32,21 +35,19 @@ router.get('/plantilla/descargar', async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Estudiantes');
 
-    // Definir columnas
     worksheet.columns = [
-      { header: 'nombre', key: 'nombre', width: 40 },
+      { header: 'nombre',              key: 'nombre',              width: 40 },
       { header: 'tipo_identificacion', key: 'tipo_identificacion', width: 20 },
-      { header: 'identificacion', key: 'identificacion', width: 15 },
-      { header: 'codigo_carnet', key: 'codigo_carnet', width: 15 },
-      { header: 'email', key: 'email', width: 35 },
-      { header: 'tipo_vinculacion', key: 'tipo_vinculacion', width: 20 },
-      { header: 'facultad', key: 'facultad', width: 35 },
-      { header: 'programa', key: 'programa', width: 50 },
-      { header: 'sem', key: 'sem', width: 10 },
-      { header: 'circunscripcion', key: 'circunscripcion', width: 25 }
+      { header: 'identificacion',      key: 'identificacion',      width: 15 },
+      { header: 'codigo_carnet',       key: 'codigo_carnet',       width: 15 },
+      { header: 'email',               key: 'email',               width: 35 },
+      { header: 'tipo_vinculacion',    key: 'tipo_vinculacion',    width: 20 },
+      { header: 'facultad',            key: 'facultad',            width: 35 },
+      { header: 'programa',            key: 'programa',            width: 50 },
+      { header: 'sem',                 key: 'sem',                 width: 10 },
+      { header: 'circunscripcion',     key: 'circunscripcion',     width: 25 }
     ];
 
-    // Estilo del encabezado
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = {
       type: 'pattern',
@@ -55,30 +56,21 @@ router.get('/plantilla/descargar', async (req, res) => {
     };
     worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
 
-    // Agregar fila de ejemplo
     worksheet.addRow({
-      nombre: 'JUAN PEREZ GOMEZ',
+      nombre:              'JUAN PEREZ GOMEZ',
       tipo_identificacion: 'CC',
-      identificacion: '1234567890',
-      codigo_carnet: '1234567890',
-      email: 'juan.perez@example.com',
-      tipo_vinculacion: 'Estudiante',
-      facultad: 'Ingeniería',
-      programa: 'Ingeniería de Sistemas',
-      sem: '5',
-      circunscripcion: 'Montería'
+      identificacion:      '1234567890',
+      codigo_carnet:       '1234567890',
+      email:               'juan.perez@example.com',
+      tipo_vinculacion:    'Estudiante',
+      facultad:            'Ingeniería',
+      programa:            'Ingeniería de Sistemas',
+      sem:                 '5',
+      circunscripcion:     'Montería'
     });
 
-    // Configurar respuesta
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename=plantilla_estudiantes.xlsx'
-    );
-
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=plantilla_estudiantes.xlsx');
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
@@ -96,49 +88,37 @@ router.post('/sincronizar', upload.single('archivo'), async (req, res) => {
     const { periodo } = req.body;
 
     if (!periodo) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'El periodo es requerido' 
-      });
+      return res.status(400).json({ success: false, message: 'El periodo es requerido' });
     }
-
     if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No se ha subido ningún archivo' 
-      });
+      return res.status(400).json({ success: false, message: 'No se ha subido ningún archivo' });
     }
 
-    // Leer archivo Excel
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(req.file.buffer);
     const worksheet = workbook.getWorksheet(1);
 
     const estudiantes = [];
-    let errores = [];
-    let lineaActual = 1;
+    const errores = [];
 
     worksheet.eachRow((row, rowNumber) => {
-      lineaActual = rowNumber;
-      // Saltar el encabezado
       if (rowNumber === 1) return;
 
       const rowData = {
-        nombre: row.getCell(1).value?.toString().trim() || '',
+        nombre:              row.getCell(1).value?.toString().trim() || '',
         tipo_identificacion: row.getCell(2).value?.toString().trim() || '',
-        identificacion: row.getCell(3).value?.toString().trim() || '',
-        codigo_carnet: row.getCell(4).value?.toString().trim().toUpperCase() || '',
-        email: row.getCell(5).value?.toString().trim().toLowerCase() || '',
-        tipo_vinculacion: row.getCell(6).value?.toString().trim() || '',
-        facultad: row.getCell(7).value?.toString().trim() || '',
-        programa: row.getCell(8).value?.toString().trim() || '',
-        sem: row.getCell(9).value?.toString().trim() || '',
-        circunscripcion: row.getCell(10).value?.toString().trim() || '',
+        identificacion:      row.getCell(3).value?.toString().trim() || '',
+        codigo_carnet:       row.getCell(4).value?.toString().trim().toUpperCase() || '',
+        email:               row.getCell(5).value?.toString().trim().toLowerCase() || '',
+        tipo_vinculacion:    row.getCell(6).value?.toString().trim() || '',
+        facultad:            row.getCell(7).value?.toString().trim() || '',
+        programa:            row.getCell(8).value?.toString().trim() || '',
+        sem:                 row.getCell(9).value?.toString().trim() || '',
+        circunscripcion:     row.getCell(10).value?.toString().trim() || '',
         periodo
       };
 
-      // Validar campos requeridos
-      if (!rowData.nombre || !rowData.tipo_identificacion || !rowData.identificacion || 
+      if (!rowData.nombre || !rowData.tipo_identificacion || !rowData.identificacion ||
           !rowData.codigo_carnet || !rowData.email) {
         errores.push(`Línea ${rowNumber}: Faltan campos obligatorios`);
         return;
@@ -148,27 +128,24 @@ router.post('/sincronizar', upload.single('archivo'), async (req, res) => {
     });
 
     if (errores.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Errores en el archivo', 
-        errores 
-      });
+      return res.status(400).json({ success: false, message: 'Errores en el archivo', errores });
     }
 
-    // Realizar la sincronización
     let insertados = 0;
     let actualizados = 0;
-    let errorSync = [];
+    const errorSync = [];
 
     for (const estudiante of estudiantes) {
       try {
         const existente = await Estudiante.findOne({
-          codigo_carnet: estudiante.codigo_carnet,
-          periodo: estudiante.periodo
+          where: {
+            codigo_carnet: estudiante.codigo_carnet,
+            periodo:       estudiante.periodo
+          }
         });
 
         if (existente) {
-          await Estudiante.findByIdAndUpdate(existente._id, estudiante);
+          await existente.update(estudiante);
           actualizados++;
         } else {
           await Estudiante.create(estudiante);
@@ -203,35 +180,32 @@ router.post('/sincronizar', upload.single('archivo'), async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 50, search, periodo } = req.query;
-    
-    let filtro = {};
-    
-    // Filtrar por periodo si se proporciona
-    if (periodo) {
-      filtro.periodo = periodo;
-    }
-    
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (periodo) where.periodo = periodo;
+
     if (search) {
-      filtro.$or = [
-        { nombre: { $regex: search, $options: 'i' } },
-        { codigo_carnet: { $regex: search, $options: 'i' } },
-        { identificacion: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+      where[Op.or] = [
+        { nombre:         { [Op.iLike]: `%${search}%` } },
+        { codigo_carnet:  { [Op.iLike]: `%${search}%` } },
+        { identificacion: { [Op.iLike]: `%${search}%` } },
+        { email:          { [Op.iLike]: `%${search}%` } }
       ];
     }
-    
-    const estudiantes = await Estudiante.find(filtro)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ nombre: 1 });
-    
-    const count = await Estudiante.countDocuments(filtro);
-    
+
+    const { count, rows: estudiantes } = await Estudiante.findAndCountAll({
+      where,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['nombre', 'ASC']]
+    });
+
     res.json({
       success: true,
       estudiantes,
       totalPages: Math.ceil(count / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       total: count
     });
   } catch (error) {
@@ -246,21 +220,16 @@ router.get('/', async (req, res) => {
 // Obtener estudiante por código de carnet (periodo más reciente)
 router.get('/codigo/:codigo', async (req, res) => {
   try {
-    const estudiante = await Estudiante.findOne({ 
-      codigo_carnet: req.params.codigo.toUpperCase() 
-    }).sort({ periodo: -1 });
-    
+    const estudiante = await Estudiante.findOne({
+      where: { codigo_carnet: req.params.codigo.toUpperCase() },
+      order: [['periodo', 'DESC']]
+    });
+
     if (!estudiante) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Estudiante no encontrado' 
-      });
+      return res.status(404).json({ success: false, message: 'Estudiante no encontrado' });
     }
 
-    res.json({
-      success: true,
-      estudiante
-    });
+    res.json({ success: true, estudiante });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
@@ -273,19 +242,13 @@ router.get('/codigo/:codigo', async (req, res) => {
 // Obtener estudiante por ID
 router.get('/:id', async (req, res) => {
   try {
-    const estudiante = await Estudiante.findById(req.params.id);
-    
+    const estudiante = await Estudiante.findByPk(req.params.id);
+
     if (!estudiante) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Estudiante no encontrado' 
-      });
+      return res.status(404).json({ success: false, message: 'Estudiante no encontrado' });
     }
 
-    res.json({
-      success: true,
-      estudiante
-    });
+    res.json({ success: true, estudiante });
   } catch (error) {
     res.status(500).json({ 
       success: false, 
@@ -298,25 +261,19 @@ router.get('/:id', async (req, res) => {
 // Actualizar estudiante
 router.put('/:id', async (req, res) => {
   try {
-    const estudiante = await Estudiante.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const estudiante = await Estudiante.findByPk(req.params.id);
 
     if (!estudiante) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Estudiante no encontrado' 
-      });
+      return res.status(404).json({ success: false, message: 'Estudiante no encontrado' });
     }
+
+    await estudiante.update(req.body);
 
     res.json({
       success: true,
       message: 'Estudiante actualizado exitosamente',
       estudiante
     });
-
   } catch (error) {
     res.status(500).json({ 
       success: false, 

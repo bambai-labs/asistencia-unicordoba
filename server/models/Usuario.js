@@ -1,73 +1,29 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-const usuarioSchema = new mongoose.Schema({
-  nombre: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  apellidos: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  cedula: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
-  cargo: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  area: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Area',
-    required: true
-  },
-  usuario: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true
-  },
-  contrasena: {
-    type: String,
-    required: true
-  },
-  rol: {
-    type: String,
-    enum: ['administrador', 'coordinador', 'profesional'],
-    default: 'profesional'
-  },
-  creado_por: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuario',
-    default: null
-  },
-  activo: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
+const Usuario = sequelize.define('Usuario', {
+  nombre:     { type: DataTypes.STRING, allowNull: false },
+  apellidos:  { type: DataTypes.STRING, allowNull: false },
+  cedula:     { type: DataTypes.STRING, allowNull: false, unique: true },
+  cargo:      { type: DataTypes.STRING, allowNull: false },
+  usuario:    { type: DataTypes.STRING, allowNull: false, unique: true },
+  contrasena: { type: DataTypes.STRING, allowNull: false },
+  rol:        { type: DataTypes.ENUM('administrador','coordinador','profesional'), defaultValue: 'profesional' },
+  activo:     { type: DataTypes.BOOLEAN, defaultValue: true },
 
-// Encriptar contraseña antes de guardar
-usuarioSchema.pre('save', async function(next) {
-  if (!this.isModified('contrasena')) return next();
-  
-  const salt = await bcrypt.genSalt(10);
-  this.contrasena = await bcrypt.hash(this.contrasena, salt);
-  next();
-});
+}, { tableName: 'usuarios', underscored: true });
 
-// Método para comparar contraseñas
-usuarioSchema.methods.compararContrasena = async function(contrasenaIngresada) {
-  return await bcrypt.compare(contrasenaIngresada, this.contrasena);
+// Relaciones — se definen en models/index.js
+
+Usuario.prototype.compararContrasena = async function(ingresada) {
+  return bcrypt.compare(ingresada, this.contrasena);
 };
 
-module.exports = mongoose.model('Usuario', usuarioSchema);
+Usuario.addHook('beforeSave', async (usuario) => {
+  if (usuario.changed('contrasena')) {
+    usuario.contrasena = await bcrypt.hash(usuario.contrasena, 10);
+  }
+});
+
+module.exports = Usuario;

@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Usuario = require('../models/Usuario');
-
-// Verificar token JWT
+const { Usuario } = require('../models/index');
 const verificarToken = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -14,9 +12,12 @@ const verificarToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const usuario = await Usuario.findById(decoded.id).select('-contrasena');
+    const usuario = await Usuario.findOne({ 
+      where: { id: decoded.id, activo: true },
+      attributes: { exclude: ['contrasena'] }
+    });
     
-    if (!usuario || !usuario.activo) {
+    if (!usuario) {
       return res.status(401).json({ 
         success: false, 
         message: 'Token inválido o usuario inactivo.' 
@@ -33,7 +34,6 @@ const verificarToken = async (req, res, next) => {
   }
 };
 
-// Verificar rol de administrador
 const esAdmin = (req, res, next) => {
   if (req.usuario.rol !== 'administrador') {
     return res.status(403).json({ 
@@ -44,7 +44,6 @@ const esAdmin = (req, res, next) => {
   next();
 };
 
-// Verificar rol de coordinador o superior
 const esCoordinadorOSuperior = (req, res, next) => {
   if (!['administrador', 'coordinador'].includes(req.usuario.rol)) {
     return res.status(403).json({ 
@@ -55,17 +54,10 @@ const esCoordinadorOSuperior = (req, res, next) => {
   next();
 };
 
-// Verificar que sea administrador o coordinador del área
 const puedeGestionarArea = (area) => {
   return (req, res, next) => {
-    if (req.usuario.rol === 'administrador') {
-      return next();
-    }
-    
-    if (req.usuario.rol === 'coordinador' && req.usuario.area === area) {
-      return next();
-    }
-    
+    if (req.usuario.rol === 'administrador') return next();
+    if (req.usuario.rol === 'coordinador' && req.usuario.area_id === area) return next();
     return res.status(403).json({ 
       success: false, 
       message: 'Acceso denegado. No tienes permisos para gestionar esta área.' 
