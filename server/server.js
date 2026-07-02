@@ -14,6 +14,7 @@ const eventosRoutes = require("./routes/eventos");
 const asistenciaRoutes = require("./routes/asistencia");
 const uploadRoutes = require("./routes/upload");
 const areasRoutes = require("./routes/areas");
+const mockRoutes = require("./routes/mock");
 
 require('./models/index');
 
@@ -49,6 +50,7 @@ app.use("/api/eventos", eventosRoutes);
 app.use("/api/asistencia", asistenciaRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/areas", areasRoutes);
+app.use("/api/mock", mockRoutes);
 
 // Ruta raíz con documentación de la API
 app.get("/", (req, res) => {
@@ -100,6 +102,10 @@ app.get("/", (req, res) => {
 				"PUT /api/areas/:id": "Actualizar área (admin)",
 				"DELETE /api/areas/:id": "Eliminar área (admin)",
 			},
+			Mock: {
+				"GET /api/mock/estudiante/:cedula": "Consultar estudiante por cédula (simulado)",
+				"GET /api/mock/padron/:periodo": "Obtener padrón completo por periodo (simulado)",
+			},
 		},
 		notas: {
 			autenticacion: "Incluir header: Authorization: Bearer <token>",
@@ -128,28 +134,28 @@ app.use((err, req, res, next) => {
 
 // Iniciar servidor
 const iniciarServidor = async () => {
-  try {
-    await connectDB();
-    iniciarWorker();
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("🎓 Sistema de Asistencia - Unicordoba");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(`📡 Servidor escuchando en puerto: ${PORT}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
-      console.log(`🗄️  Base de datos: PostgreSQL`);
-      console.log(`📁 Archivos estáticos: /uploads`);
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("\n📝 Comandos disponibles:");
-      console.log("   npm start          - Iniciar servidor");
-      console.log("   npm run dev        - Modo desarrollo con nodemon");
-      console.log("   npm run sync       - Sincronizar estudiantes desde API");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    });
-  } catch (error) {
-    console.error("❌ Error al iniciar el servidor:", error);
-    process.exit(1);
-  }
+	try {
+		await connectDB();
+		iniciarWorker();
+		app.listen(PORT, "0.0.0.0", () => {
+			console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			console.log("🎓 Sistema de Asistencia - Unicordoba");
+			console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			console.log(`📡 Servidor escuchando en puerto: ${PORT}`);
+			console.log(`🌐 URL: http://localhost:${PORT}`);
+			console.log(`🗄️  Base de datos: PostgreSQL`);
+			console.log(`📁 Archivos estáticos: /uploads`);
+			console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+			console.log("\n📝 Comandos disponibles:");
+			console.log("   npm start          - Iniciar servidor");
+			console.log("   npm run dev        - Modo desarrollo con nodemon");
+			console.log("   npm run sync       - Sincronizar estudiantes desde API");
+			console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+		});
+	} catch (error) {
+		console.error("❌ Error al iniciar el servidor:", error);
+		process.exit(1);
+	}
 };
 
 iniciarServidor();
