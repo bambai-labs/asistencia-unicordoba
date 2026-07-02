@@ -77,14 +77,10 @@ app.get("/", (req, res) => {
 				"POST /api/eventos": "Crear evento (autenticado)",
 				"GET /api/eventos": "Listar eventos (autenticado)",
 				"GET /api/eventos/:id": "Obtener evento (autenticado)",
-				"GET /api/eventos/dispositivo/:codigo":
-					"Evento activo por dispositivo (autenticado)",
 				"PUT /api/eventos/:id": "Actualizar evento (autenticado)",
 				"DELETE /api/eventos/:id": "Eliminar evento (autenticado)",
 			},
 			Asistencia: {
-				"POST /api/asistencia/registrar":
-					"Registrar asistencia desde ESP32 (público)",
 				"GET /api/asistencia/evento/:eventoId":
 					"Asistencias de un evento (autenticado)",
 				"GET /api/asistencia/evento/:eventoId/estadisticas":
@@ -107,7 +103,7 @@ app.get("/", (req, res) => {
 		},
 		notas: {
 			autenticacion: "Incluir header: Authorization: Bearer <token>",
-			sincronizar_estudiantes: "Ejecutar: npm run sync",
+			sincronizar_estudiantes: "Pendiente: integración con API universitaria",
 		},
 	});
 });
