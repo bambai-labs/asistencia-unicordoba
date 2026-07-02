@@ -1,22 +1,44 @@
 require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
-const csv = require('csv-parser');
+const https = require('https');
+const http  = require('http');
 const { connectDB, sequelize } = require('../config/database');
 const { Estudiante } = require('../models/index');
 
-const CSV_PATH = path.join(__dirname, '../../estudiantes.csv');
+// URL de la API — mock por ahora, API real cuando esté disponible
+const API_BASE_URL = process.env.API_UNIVERSIDAD_URL || 'http://localhost:3000/api/mock';
+
+// Timeout en milisegundos — si la API no responde en 10s se aborta
+const TIMEOUT_MS = 10000;
+
+// Función para hacer GET con timeout
+function fetchConTimeout(url) {
+  return new Promise((resolve, reject) => {
+    const cliente = url.startsWith('https') ? https : http;
+    const req = cliente.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch (e) {
+          reject(new Error('Respuesta inválida de la API'));
+        }
+      });
+    });
+    req.setTimeout(TIMEOUT_MS, () => {
+      req.destroy();
+      reject(new Error(`Timeout: la API no respondió en ${TIMEOUT_MS/1000}s`));
+    });
+    req.on('error', reject);
+  });
+}
 
 async function syncStudents() {
   try {
     await connectDB();
     console.log('✅ Conectado a PostgreSQL');
 
-    if (!fs.existsSync(CSV_PATH)) {
-      console.error('❌ Archivo estudiantes.csv no encontrado en:', CSV_PATH);
-      process.exit(1);
-    }
-
+    // Solicitar periodo
     const readline = require('readline');
     const rl = readline.createInterface({
       input:  process.stdin,
@@ -24,7 +46,7 @@ async function syncStudents() {
     });
 
     const periodo = await new Promise((resolve) => {
-      rl.question('Ingresa el periodo académico (ej: 2025-I, 2025-II): ', (answer) => {
+      rl.question('Ingresa el periodo académico (ej: 2026-I, 2026-II): ', (answer) => {
         rl.close();
         resolve(answer.trim());
       });
@@ -35,77 +57,76 @@ async function syncStudents() {
       process.exit(1);
     }
 
-    console.log(`📅 Sincronizando para el periodo: ${periodo}\n`);
+    console.log(`📅 Sincronizando para el periodo: ${periodo}`);
+    console.log(`🌐 Consultando API: ${API_BASE_URL}/padron/${periodo}\n`);
 
-    const estudiantes = [];
-    let lineCount  = 0;
-    let errorCount = 0;
+    // Consultar padrón a la API con timeout
+    let respuesta;
+    try {
+      respuesta = await fetchConTimeout(`${API_BASE_URL}/padron/${periodo}`);
+    } catch (error) {
+      console.error('❌ Error al consultar la API universitaria:', error.message);
+      console.error('   Verifica que la API esté disponible y que API_UNIVERSIDAD_URL esté configurada');
+      await sequelize.close();
+      process.exit(1);
+    }
 
-    await new Promise((resolve, reject) => {
-      fs.createReadStream(CSV_PATH, { encoding: 'utf8' })
-        .pipe(csv({
-          separator: ';',
-          skipLines: 0,
-          mapHeaders: ({ header }) => header.replace(/^\uFEFF/, '').trim()
-        }))
-        .on('data', (row) => {
-          lineCount++;
-          try {
-            if (row.nombre && row.tipo_identificacion && row.identificacion &&
-                row.codigo_carnet && row.email) {
-              estudiantes.push({
-                nombre:              row.nombre.trim(),
-                tipo_identificacion: row.tipo_identificacion.trim(),
-                identificacion:      row.identificacion.trim(),
-                codigo_carnet:       row.codigo_carnet.trim().toUpperCase(),
-                email:               row.email.trim().toLowerCase(),
-                tipo_vinculacion:    row.tipo_vinculacion  ? row.tipo_vinculacion.trim()  : '',
-                facultad:            row.facultad          ? row.facultad.trim()          : '',
-                programa:            row.programa          ? row.programa.trim()          : '',
-                sem:                 row.sem               ? row.sem.trim()               : '',
-                circunscripcion:     row.circunscripcion   ? row.circunscripcion.trim()   : '',
-                periodo,
-                activo: true
-              });
-            } else {
-              console.warn(`⚠️  Línea ${lineCount}: Datos incompletos, ignorando...`);
-              errorCount++;
-            }
-          } catch (error) {
-            console.error(`❌ Error en línea ${lineCount}:`, error.message);
-            errorCount++;
-          }
-        })
-        .on('end',   resolve)
-        .on('error', reject);
-    });
+    if (!respuesta.success || !respuesta.estudiantes) {
+      console.error('❌ La API no devolvió datos válidos');
+      await sequelize.close();
+      process.exit(1);
+    }
 
-    console.log(`\n📊 Resumen de lectura del CSV:`);
-    console.log(`   Total líneas leídas: ${lineCount}`);
-    console.log(`   Estudiantes válidos: ${estudiantes.length}`);
-    console.log(`   Errores/Omitidos:   ${errorCount}\n`);
+    const estudiantes = respuesta.estudiantes;
+    console.log(`📊 Estudiantes recibidos de la API: ${estudiantes.length}\n`);
 
     if (estudiantes.length === 0) {
-      console.log('⚠️  No hay estudiantes para sincronizar');
+      console.log('⚠️  No hay estudiantes para sincronizar en este periodo');
       await sequelize.close();
       process.exit(0);
     }
 
-    console.log('🔄 Sincronizando estudiantes con PostgreSQL...\n');
+    // Sincronizar con PostgreSQL
+    console.log('🔄 Sincronizando con PostgreSQL...\n');
 
-    let insertados  = 0;
+    let insertados   = 0;
     let actualizados = 0;
-    let errores     = 0;
+    let errores      = 0;
 
-    for (const estudiante of estudiantes) {
+    for (const est of estudiantes) {
       try {
-        const [, created] = await Estudiante.upsert(estudiante, {
-          conflictFields: ['codigo_carnet', 'periodo']
+        const estudianteData = {
+          nombre:              est.nombre,
+          tipo_identificacion: est.tipo_identificacion,
+          identificacion:      est.identificacion,
+          codigo_carnet:       est.codigo_carnet?.toUpperCase(),
+          email:               est.email?.toLowerCase(),
+          tipo_vinculacion:    est.tipo_vinculacion    || '',
+          facultad:            est.facultad            || '',
+          programa:            est.programa            || '',
+          sem:                 est.sem                 || '',
+          circunscripcion:     est.circunscripcion     || '',
+          periodo,
+          activo: true
+        };
+
+        // Verificar si ya existe
+        const existente = await Estudiante.findOne({
+          where: {
+            identificacion: estudianteData.identificacion,
+            periodo:        estudianteData.periodo
+          }
         });
-        if (created) insertados++;
-        else actualizados++;
+
+        if (existente) {
+          await existente.update(estudianteData);
+          actualizados++;
+        } else {
+          await Estudiante.create(estudianteData);
+          insertados++;
+        }
       } catch (error) {
-        console.error(`❌ Error con ${estudiante.codigo_carnet}:`, error.message);
+        console.error(`❌ Error con ${est.identificacion}:`, error.message);
         errores++;
       }
     }

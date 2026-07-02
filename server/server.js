@@ -70,9 +70,9 @@ app.get("/", (req, res) => {
 			},
 			Estudiantes: {
 				"GET /api/estudiantes": "Listar estudiantes (autenticado)",
+				"GET /api/estudiantes/periodos": "Obtener periodos disponibles (autenticado)",
 				"GET /api/estudiantes/:id": "Obtener estudiante (autenticado)",
-				"GET /api/estudiantes/codigo/:codigo":
-					"Buscar por código de carnet (autenticado)",
+				"GET /api/estudiantes/codigo/:codigo": "Buscar por código de carnet (autenticado)",
 				"PUT /api/estudiantes/:id": "Actualizar estudiante (autenticado)",
 			},
 			Eventos: {
