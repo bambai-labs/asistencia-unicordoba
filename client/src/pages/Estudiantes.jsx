@@ -12,15 +12,11 @@ import {
   Loader,
   Center,
   ScrollArea,
-  Button,
-  Modal,
-  Select,
-  FileInput,
-  NumberInput
+  Select
 } from '@mantine/core'
-import { useDebouncedValue, useDisclosure } from '@mantine/hooks'
+import { useDebouncedValue } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
-import { IconSearch, IconUpload, IconDownload, IconDatabaseImport } from '@tabler/icons-react'
+import { IconSearch } from '@tabler/icons-react'
 import { estudiantesService } from '../services/api'
 
 const Estudiantes = () => {
@@ -33,16 +29,10 @@ const Estudiantes = () => {
   const [total, setTotal] = useState(0)
   const [periodos, setPeriodos] = useState([])
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState('')
-  const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false)
-  const [archivo, setArchivo] = useState(null)
-  const [anioSync, setAnioSync] = useState(new Date().getFullYear())
-  const [semestreSync, setSemestreSync] = useState('I')
-  const [sincronizando, setSincronizando] = useState(false)
 
   useEffect(() => {
     const init = async () => {
       await loadPeriodos()
-      // loadEstudiantes se disparará automáticamente cuando periodoSeleccionado cambie
     }
     init()
   }, [])
@@ -60,7 +50,6 @@ const Estudiantes = () => {
       }
     } catch (error) {
       console.error('Error loading periodos:', error)
-      // Si falla la carga de periodos, cargar estudiantes sin filtro
       notifications.show({
         title: 'Advertencia',
         message: 'No se pudieron cargar los periodos. Mostrando todos los estudiantes.',
@@ -72,17 +61,8 @@ const Estudiantes = () => {
   const loadEstudiantes = async () => {
     try {
       setLoading(true)
-      const params = {
-        page,
-        limit: 50,
-        search: debouncedSearch
-      }
-      
-      // Solo agregar filtro de periodo si hay uno seleccionado
-      if (periodoSeleccionado) {
-        params.periodo = periodoSeleccionado
-      }
-      
+      const params = { page, limit: 50, search: debouncedSearch }
+      if (periodoSeleccionado) params.periodo = periodoSeleccionado
       const data = await estudiantesService.getAll(params)
       setEstudiantes(data.estudiantes || [])
       setTotalPages(data.totalPages || 1)
@@ -99,71 +79,6 @@ const Estudiantes = () => {
     }
   }
 
-  const handleDescargarPlantilla = async () => {
-    try {
-      const blob = await estudiantesService.descargarPlantilla()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'plantilla_estudiantes.xlsx'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      notifications.show({
-        title: 'Éxito',
-        message: 'Plantilla descargada correctamente',
-        color: 'green'
-      })
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'No se pudo descargar la plantilla',
-        color: 'red'
-      })
-    }
-  }
-
-  const handleSincronizar = async () => {
-    if (!archivo) {
-      notifications.show({
-        title: 'Error',
-        message: 'Debes seleccionar un archivo',
-        color: 'red'
-      })
-      return
-    }
-
-    try {
-      setSincronizando(true)
-      const periodo = `${anioSync}-${semestreSync}`
-      const formData = new FormData()
-      formData.append('archivo', archivo)
-      formData.append('periodo', periodo)
-
-      const result = await estudiantesService.sincronizar(formData)
-      
-      notifications.show({
-        title: 'Éxito',
-        message: `${result.resultado.insertados} insertados, ${result.resultado.actualizados} actualizados`,
-        color: 'green'
-      })
-
-      closeModal()
-      setArchivo(null)
-      loadPeriodos()
-      loadEstudiantes()
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: error.response?.data?.message || 'Error al sincronizar',
-        color: 'red'
-      })
-    } finally {
-      setSincronizando(false)
-    }
-  }
-
   return (
     <Stack gap="lg">
       <Group justify="space-between" wrap="wrap">
@@ -175,25 +90,6 @@ const Estudiantes = () => {
             {total.toLocaleString()} estudiantes registrados {periodoSeleccionado && `- Periodo ${periodoSeleccionado}`}
           </Text>
         </div>
-        <Group gap="xs">
-          <Button
-            variant="light"
-            color="blue"
-            leftSection={<IconDownload size={16} />}
-            onClick={handleDescargarPlantilla}
-            size="sm"
-          >
-            Descargar Plantilla
-          </Button>
-          <Button
-            color="green"
-            leftSection={<IconDatabaseImport size={16} />}
-            onClick={openModal}
-            size="sm"
-          >
-            Sincronizar Base de Datos
-          </Button>
-        </Group>
       </Group>
 
       <Card shadow="sm" padding="lg" radius="md" withBorder>
@@ -239,7 +135,7 @@ const Estudiantes = () => {
                 </Table.Thead>
                 <Table.Tbody>
                   {estudiantes.map((estudiante) => (
-                    <Table.Tr key={estudiante._id}>
+                    <Table.Tr key={estudiante.id}>
                       <Table.Td>
                         <Text size="sm" lineClamp={1}>{estudiante.nombre}</Text>
                       </Table.Td>
@@ -294,81 +190,6 @@ const Estudiantes = () => {
           </>
         )}
       </Card>
-
-      <Modal
-        opened={modalOpened}
-        onClose={closeModal}
-        title="Sincronizar Base de Datos de Estudiantes"
-        size="md"
-      >
-        <Stack>
-          <Text size="sm" c="dimmed">
-            Sube un archivo Excel con los datos de los estudiantes para sincronizar la base de datos del periodo académico seleccionado.
-          </Text>
-
-          <Group grow>
-            <NumberInput
-              label="Año"
-              placeholder="2025"
-              value={anioSync}
-              onChange={setAnioSync}
-              min={2020}
-              max={2050}
-              required
-            />
-            <Select
-              label="Semestre"
-              placeholder="Selecciona"
-              data={[
-                { value: 'I', label: 'I - Primer Semestre' },
-                { value: 'II', label: 'II - Segundo Semestre' }
-              ]}
-              value={semestreSync}
-              onChange={setSemestreSync}
-              required
-            />
-          </Group>
-
-          <Badge size="lg" variant="light" color="blue">
-            Periodo: {anioSync}-{semestreSync}
-          </Badge>
-
-          <FileInput
-            label="Archivo Excel"
-            placeholder="Selecciona el archivo..."
-            leftSection={<IconUpload size={16} />}
-            accept=".xlsx,.xls"
-            value={archivo}
-            onChange={setArchivo}
-            required
-          />
-
-          <Group justify="space-between" mt="md">
-            <Button
-              variant="light"
-              color="blue"
-              leftSection={<IconDownload size={16} />}
-              onClick={handleDescargarPlantilla}
-              size="sm"
-            >
-              Descargar Plantilla
-            </Button>
-            <Group>
-              <Button variant="light" onClick={closeModal}>
-                Cancelar
-              </Button>
-              <Button
-                color="green"
-                onClick={handleSincronizar}
-                loading={sincronizando}
-                leftSection={<IconDatabaseImport size={16} />}
-              >
-                Sincronizar
-              </Button>
-            </Group>
-          </Group>
-        </Stack>
-      </Modal>
     </Stack>
   )
 }

@@ -118,7 +118,7 @@ const Asistencias = () => {
   }
 
   const eventosOptions = eventosActivos.map(e => ({
-    value: e._id,
+    value: String(e.id),
     label: `${e.nombre} - ${dayjs(e.fecha).format('DD/MM/YYYY')} ${e.hora_inicio}`
   }))
 
@@ -186,7 +186,7 @@ const Asistencias = () => {
 
             <Alert icon={<IconQrcode size={16} />} color="blue" mt="md">
               <Text size="sm">
-                <strong>Nota:</strong> Los estudiantes también pueden registrar su asistencia escaneando su carnet con el dispositivo ESP32.
+                <strong>Nota:</strong> También puedes escanear el QR del carnet desde la sección Escanear QR.
               </Text>
             </Alert>
           </Card>
@@ -222,10 +222,10 @@ const Asistencias = () => {
                   </Table.Thead>
                   <Table.Tbody>
                     {asistencias.map((asistencia, index) => (
-                      <Table.Tr key={asistencia._id}>
+                      <Table.Tr key={asistencia.id}>
                         <Table.Td>{index + 1}</Table.Td>
                         <Table.Td>
-                          <Text size="sm" fw={500} lineClamp={1}>{asistencia.estudiante?.nombre}</Text>
+                          <Text size="sm" fw={500} lineClamp={1}>{asistencia.Estudiante?.nombre}</Text>
                         </Table.Td>
                         <Table.Td>
                           <Badge variant="light" color="green" size="sm">
@@ -233,10 +233,10 @@ const Asistencias = () => {
                           </Badge>
                         </Table.Td>
                         <Table.Td>
-                          <Text size="xs">{asistencia.estudiante?.identificacion}</Text>
+                          <Text size="xs">{asistencia.Estudiante?.identificacion}</Text>
                         </Table.Td>
                         <Table.Td>
-                          <Text size="xs" lineClamp={1}>{asistencia.estudiante?.email}</Text>
+                          <Text size="xs" lineClamp={1}>{asistencia.Estudiante?.email}</Text>
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs">

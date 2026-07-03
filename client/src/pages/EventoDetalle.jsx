@@ -30,7 +30,6 @@ import {
   IconCalendar,
   IconClock,
   IconMapPin,
-  IconDeviceDesktop,
   IconUsers,
   IconDownload,
   IconUpload,
@@ -179,7 +178,7 @@ const EventoDetalle = () => {
     }
 
     try {
-      await eventosService.deleteFoto(id, fotoId)
+      await eventosService.deleteFoto(id, foto.url)
       notifications.show({
         title: 'Éxito',
         message: 'Foto eliminada correctamente',
@@ -323,16 +322,6 @@ const EventoDetalle = () => {
                     <Text size="sm" fw={500} lineClamp={1}>{evento.lugar}</Text>
                   </Box>
                 </Group>
-
-                <Group gap="xs" wrap="nowrap">
-                  <ThemeIcon variant="light" color="grape" size="sm">
-                    <IconDeviceDesktop size={16} />
-                  </ThemeIcon>
-                  <Box style={{ minWidth: 0 }}>
-                    <Text size="xs" c="dimmed">Dispositivo</Text>
-                    <Text size="sm" fw={500}>{evento.dispositivo?.codigo}</Text>
-                  </Box>
-                </Group>
               </SimpleGrid>
 
               {evento.creado_por && (
@@ -386,7 +375,7 @@ const EventoDetalle = () => {
                           top: 5,
                           right: 5
                         }}
-                        onClick={() => handleDeleteFoto(foto._id)}
+                        onClick={() => handleDeleteFoto(foto.url)}
                       >
                         <IconTrash size={14} />
                       </Button>
@@ -437,10 +426,10 @@ const EventoDetalle = () => {
               </Table.Thead>
               <Table.Tbody>
                 {asistencias.map((asistencia, index) => (
-                  <Table.Tr key={asistencia._id}>
+                  <Table.Tr key={asistencia.id}>
                     <Table.Td>{index + 1}</Table.Td>
                     <Table.Td>
-                      <Text size="sm" fw={500} lineClamp={1}>{asistencia.estudiante?.nombre}</Text>
+                      <Text size="sm" fw={500} lineClamp={1}>{asistencia.Estudiante?.nombre}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Badge variant="light" color="green" size="sm">
@@ -448,7 +437,7 @@ const EventoDetalle = () => {
                       </Badge>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="xs" lineClamp={1}>{asistencia.estudiante?.email}</Text>
+                      <Text size="xs" lineClamp={1}>{asistencia.Estudiante?.email}</Text>
                     </Table.Td>
                     <Table.Td>
                       <Text size="xs">

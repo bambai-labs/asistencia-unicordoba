@@ -250,11 +250,11 @@ const EscanearQR = () => {
   }
 
   const eventosOptions = eventos.map(e => ({
-    value: e._id,
+    value: String(e.id),
     label: `${e.nombre} - ${dayjs(e.fecha).format('DD/MM/YYYY')}`
   }))
 
-  const eventoActual = eventos.find(e => e._id === eventoSeleccionado)
+  const eventoActual = eventos.find(e => e.id === eventoSeleccionado)
 
   return (
     <Stack gap="lg">

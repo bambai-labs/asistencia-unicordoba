@@ -8,7 +8,6 @@ import DashboardLayout from '../layouts/DashboardLayout'
 import Dashboard from '../pages/Dashboard'
 import Usuarios from '../pages/Usuarios'
 import Estudiantes from '../pages/Estudiantes'
-import Dispositivos from '../pages/Dispositivos'
 import Eventos from '../pages/Eventos'
 import EventoDetalle from '../pages/EventoDetalle'
 import Asistencias from '../pages/Asistencias'
@@ -58,7 +57,6 @@ const AppRoutes = () => {
         <Route index element={<Dashboard />} />
         <Route path="usuarios" element={<Usuarios />} />
         <Route path="estudiantes" element={<Estudiantes />} />
-        <Route path="dispositivos" element={<Dispositivos />} />
         <Route path="eventos" element={<Eventos />} />
         <Route path="eventos/:id" element={<EventoDetalle />} />
         <Route path="asistencias" element={<Asistencias />} />

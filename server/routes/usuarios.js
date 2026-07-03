@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const Usuario = require('../models/Usuario');
+const { Usuario, Area } = require('../models/index');
 const { verificarToken, esAdmin, esCoordinadorOSuperior } = require('../middleware/auth');
 
 // Todas las rutas requieren autenticación
@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
       include: [
         { model: Area, as: 'Area', attributes: ['nombre', 'codigo', 'color'] }
       ],
-      order: [['created_at', 'DESC']]
+      order: [['createdAt', 'DESC']]
     });
 
     res.json({
@@ -129,6 +129,7 @@ router.get('/', async (req, res) => {
       usuarios
     });
   } catch (error) {
+    console.error('ERROR USUARIOS:', error.message, error.stack);
     res.status(500).json({ 
       success: false, 
       message: 'Error al obtener usuarios', 

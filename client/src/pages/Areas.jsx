@@ -90,7 +90,7 @@ const Areas = () => {
   const handleSubmit = async (values) => {
     try {
       if (editingArea) {
-        await areasService.update(editingArea._id, values)
+        await areasService.update(editingArea.id, values)
         notifications.show({
           title: 'Éxito',
           message: 'Área actualizada correctamente',
@@ -132,7 +132,7 @@ const Areas = () => {
       confirmProps: { color: 'red' },
       onConfirm: async () => {
         try {
-          await areasService.delete(area._id)
+          await areasService.delete(area.id)
           notifications.show({
             title: 'Éxito',
             message: 'Área eliminada correctamente',
@@ -189,7 +189,7 @@ const Areas = () => {
             </Table.Thead>
             <Table.Tbody>
               {areas.map((area) => (
-                <Table.Tr key={area._id}>
+                <Table.Tr key={area.id}>
                   <Table.Td>
                     <Badge color={area.color} variant="filled">
                       {area.codigo}

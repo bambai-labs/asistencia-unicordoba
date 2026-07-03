@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const Area = require('../models/Area');
+const { Area, Evento, Usuario } = require('../models/index');
 const { verificarToken, esAdmin } = require('../middleware/auth');
 
 // Obtener todas las áreas
@@ -121,7 +121,7 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
 
     if (nombre && nombre !== area.nombre) {
       const existeNombre = await Area.findOne({
-        where: { nombre, id: { [Op.ne]: req.params.id } }
+        where: { nombre, id: { [Op.ne]: parseInt(req.params.id) } }
       });
       if (existeNombre) {
         return res.status(400).json({
@@ -135,7 +135,7 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
       const existeCodigo = await Area.findOne({
         where: {
           codigo: codigo.toUpperCase(),
-          id: { [Op.ne]: req.params.id }
+          id: { [Op.ne]: parseInt(req.params.id) }
         }
       });
       if (existeCodigo) {
@@ -173,8 +173,6 @@ router.put('/:id', verificarToken, esAdmin, async (req, res) => {
 // Eliminar área (solo admin)
 router.delete('/:id', verificarToken, esAdmin, async (req, res) => {
   try {
-    const { Area } = require('../models/index');
-    const Evento = require('../models/Evento');
 
     const usuariosConArea = await Usuario.count({
       where: { area_id: req.params.id }

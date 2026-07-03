@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 import {
   Grid,
   Card,
@@ -9,15 +9,15 @@ import {
   ThemeIcon,
   RingProgress,
   Center,
-  Loader
-} from '@mantine/core'
+  Loader,
+} from "@mantine/core";
 import {
   IconSchool,
-  IconDeviceDesktop,
   IconCalendarEvent,
-  IconClipboardCheck
-} from '@tabler/icons-react'
-import { estudiantesService, dispositivosService, eventosService } from '../services/api'
+  IconClipboardCheck,
+  IconUsers,
+} from "@tabler/icons-react";
+import { estudiantesService, eventosService } from "../services/api";
 
 const StatCard = ({ title, value, icon: Icon, color, loading }) => (
   <Card shadow="sm" padding="lg" radius="md" withBorder>
@@ -35,46 +35,48 @@ const StatCard = ({ title, value, icon: Icon, color, loading }) => (
       </ThemeIcon>
     </Group>
   </Card>
-)
+);
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
     estudiantes: 0,
-    dispositivos: 0,
     eventosActivos: 0,
-    eventosTotal: 0
-  })
-  const [loading, setLoading] = useState(true)
+    eventosTotal: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats()
-  }, [])
+    loadStats();
+  }, []);
 
   const loadStats = async () => {
     try {
-      const [estudiantesData, dispositivosData, eventosActivosData, eventosTotalData] = await Promise.all([
+      const [
+        estudiantesData,
+        eventosActivosData,
+        eventosTotalData,
+      ] = await Promise.all([
         estudiantesService.getAll({ limit: 1 }),
-        dispositivosService.getAll(),
         eventosService.getAll({ activo: true, finalizado: false }),
-        eventosService.getAll()
-      ])
+        eventosService.getAll(),
+      ]);
 
       setStats({
         estudiantes: estudiantesData.total || 0,
-        dispositivos: dispositivosData.count || 0,
         eventosActivos: eventosActivosData.count || 0,
-        eventosTotal: eventosTotalData.count || 0
-      })
+        eventosTotal: eventosTotalData.count || 0,
+      });
     } catch (error) {
-      console.error('Error loading stats:', error)
+      console.error("Error loading stats:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const eventosPercentage = stats.eventosTotal > 0
-    ? (stats.eventosActivos / stats.eventosTotal) * 100
-    : 0
+  const eventosPercentage =
+    stats.eventosTotal > 0
+      ? (stats.eventosActivos / stats.eventosTotal) * 100
+      : 0;
 
   return (
     <Stack gap="lg">
@@ -94,16 +96,6 @@ const Dashboard = () => {
             value={stats.estudiantes}
             icon={IconSchool}
             color="blue"
-            loading={loading}
-          />
-        </Grid.Col>
-
-        <Grid.Col span={{ base: 12, md: 6, lg: 3 }}>
-          <StatCard
-            title="Dispositivos"
-            value={stats.dispositivos}
-            icon={IconDeviceDesktop}
-            color="grape"
             loading={loading}
           />
         </Grid.Col>
@@ -132,14 +124,14 @@ const Dashboard = () => {
       <Grid>
         <Grid.Col span={{ base: 12, md: 6 }}>
           <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Title order={3} mb="md">Eventos Activos</Title>
+            <Title order={3} mb="md">
+              Eventos Activos
+            </Title>
             <Center>
               <RingProgress
                 size={180}
                 thickness={16}
-                sections={[
-                  { value: eventosPercentage, color: 'green' }
-                ]}
+                sections={[{ value: eventosPercentage, color: "green" }]}
                 label={
                   <Center>
                     <Stack gap={0} align="center">
@@ -159,23 +151,27 @@ const Dashboard = () => {
 
         <Grid.Col span={{ base: 12, md: 6 }}>
           <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Title order={3} mb="md">Sistema Operativo</Title>
+            <Title order={3} mb="md">
+              Sistema Operativo
+            </Title>
             <Stack gap="md">
               <Group justify="apart">
                 <Text size="sm">Base de Datos</Text>
-                <Text size="sm" fw={600} c="green">Activa</Text>
+                <Text size="sm" fw={600} c="green">
+                  Activa
+                </Text>
               </Group>
               <Group justify="apart">
                 <Text size="sm">API Backend</Text>
-                <Text size="sm" fw={600} c="green">Operativa</Text>
-              </Group>
-              <Group justify="apart">
-                <Text size="sm">Dispositivos ESP32</Text>
-                <Text size="sm" fw={600} c="green">{stats.dispositivos} Registrados</Text>
+                <Text size="sm" fw={600} c="green">
+                  Operativa
+                </Text>
               </Group>
               <Group justify="apart">
                 <Text size="sm">Estudiantes Sincronizados</Text>
-                <Text size="sm" fw={600} c="green">{stats.estudiantes.toLocaleString()}</Text>
+                <Text size="sm" fw={600} c="green">
+                  {stats.estudiantes.toLocaleString()}
+                </Text>
               </Group>
             </Stack>
           </Card>
@@ -183,14 +179,17 @@ const Dashboard = () => {
       </Grid>
 
       <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <Title order={3} mb="md">Información del Sistema</Title>
+        <Title order={3} mb="md">
+          Información del Sistema
+        </Title>
         <Text size="sm" c="dimmed">
-          Sistema de Asistencia a Eventos desarrollado para la Unicordoba.
-          Este dashboard proporciona una vista general del estado del sistema y sus componentes principales.
+          Sistema de Asistencia a Eventos desarrollado para la Unicordoba. Este
+          dashboard proporciona una vista general del estado del sistema y sus
+          componentes principales.
         </Text>
       </Card>
     </Stack>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

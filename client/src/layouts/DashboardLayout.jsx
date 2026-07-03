@@ -19,7 +19,6 @@ import {
   IconDashboard,
   IconUsers,
   IconSchool,
-  IconDeviceDesktop,
   IconCalendarEvent,
   IconClipboardList,
   IconLogout,
@@ -38,14 +37,13 @@ const DashboardLayout = () => {
   const location = useLocation()
 
   const navItems = [
-    { label: 'Dashboard', icon: IconDashboard, path: '/' },
-    { label: 'Usuarios', icon: IconUsers, path: '/usuarios', adminOnly: true },
-    { label: 'Áreas', icon: IconPalette, path: '/areas', adminOnly: true },
-    { label: 'Estudiantes', icon: IconSchool, path: '/estudiantes' },
-    { label: 'Dispositivos', icon: IconDeviceDesktop, path: '/dispositivos' },
-    { label: 'Eventos', icon: IconCalendarEvent, path: '/eventos' },
-    { label: 'Asistencias', icon: IconClipboardList, path: '/asistencias' },
-    { label: 'Escanear QR', icon: IconQrcode, path: '/escanear-qr' }
+    { label: 'Dashboard',   icon: IconDashboard,      path: '/' },
+    { label: 'Usuarios',    icon: IconUsers,           path: '/usuarios',    adminOnly: true },
+    { label: 'Áreas',       icon: IconPalette,         path: '/areas',       adminOnly: true },
+    { label: 'Estudiantes', icon: IconSchool,          path: '/estudiantes' },
+    { label: 'Eventos',     icon: IconCalendarEvent,   path: '/eventos' },
+    { label: 'Asistencias', icon: IconClipboardList,   path: '/asistencias' },
+    { label: 'Escanear QR', icon: IconQrcode,          path: '/escanear-qr' }
   ]
 
   const handleLogout = () => {
@@ -77,19 +75,10 @@ const DashboardLayout = () => {
               size="sm"
             />
             <Group gap="sm">
-              <Image
-                src={logo}
-                alt="Unicordoba"
-                h={50}
-                w="auto"
-              />
+              <Image src={logo} alt="Unicordoba" h={50} w="auto" />
               <div>
-                <Title order={4} c="green.7">
-                  Unicordoba
-                </Title>
-                <Text size="xs" c="dimmed">
-                  Sistema de Asistencia
-                </Text>
+                <Title order={4} c="green.7">Unicordoba</Title>
+                <Text size="xs" c="dimmed">Sistema de Asistencia</Text>
               </div>
             </Group>
           </Group>
@@ -102,12 +91,8 @@ const DashboardLayout = () => {
                     <IconUser size={16} />
                   </Avatar>
                   <Box visibleFrom="sm" style={{ minWidth: 0 }}>
-                    <Text size="sm" fw={500} lineClamp={1}>
-                      {user?.usuario}
-                    </Text>
-                    <Text size="xs" c="dimmed" lineClamp={1}>
-                      {user?.rol}
-                    </Text>
+                    <Text size="sm" fw={500} lineClamp={1}>{user?.usuario}</Text>
+                    <Text size="xs" c="dimmed" lineClamp={1}>{user?.rol}</Text>
                   </Box>
                   <IconChevronDown size={14} style={{ flexShrink: 0 }} />
                 </Group>
@@ -142,7 +127,7 @@ const DashboardLayout = () => {
               active={location.pathname === item.path}
               onClick={() => {
                 navigate(item.path)
-                toggle() // Cerrar el menú en móviles después de navegar
+                toggle()
               }}
               variant="filled"
               color="green"
@@ -160,9 +145,7 @@ const DashboardLayout = () => {
               textAlign: 'center'
             }}
           >
-            <Text size="xs" c="green.9" fw={600}>
-              Sistema de Asistencia
-            </Text>
+            <Text size="xs" c="green.9" fw={600}>Sistema de Asistencia</Text>
           </Box>
         </AppShell.Section>
       </AppShell.Navbar>
