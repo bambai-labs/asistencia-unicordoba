@@ -129,7 +129,6 @@ router.get('/', async (req, res) => {
       usuarios
     });
   } catch (error) {
-    console.error('ERROR USUARIOS:', error.message, error.stack);
     res.status(500).json({ 
       success: false, 
       message: 'Error al obtener usuarios', 
