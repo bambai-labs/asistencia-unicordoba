@@ -470,20 +470,20 @@ const Eventos = () => {
                   {user?.rol !== "profesional" && (
                     <Table.Td>
                       <Text size="xs" lineClamp={1}>
-                        {evento.creado_por
-                          ? `${evento.creado_por.nombre} ${evento.creado_por.apellidos}`
+                        {evento.creador
+                          ? `${evento.creador.nombre} ${evento.creador.apellidos}`
                           : "N/A"}
                       </Text>
-                      {evento.creado_por?.area && (
+                      {evento.creador?.area && (
                         <Badge
                           size="xs"
                           variant="dot"
-                          color={evento.creado_por.area.color}
+                          color={evento.creador.area.color}
                           style={{
-                            backgroundColor: `${evento.creado_por.area.color}15`,
+                            backgroundColor: `${evento.creador.area.color}15`,
                           }}
                         >
-                          {evento.creado_por.area.nombre}
+                          {evento.creador.area.nombre}
                         </Badge>
                       )}
                     </Table.Td>

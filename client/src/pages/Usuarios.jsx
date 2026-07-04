@@ -98,7 +98,7 @@ const Usuarios = () => {
         apellidos: usuario.apellidos || "",
         cedula: usuario.cedula || "",
         cargo: usuario.cargo || "",
-        area: usuario.area?.id || usuario.area || "",
+        area: usuario.Area?.id ? String(usuario.Area.id) : "",
         usuario: usuario.usuario,
         contrasena: "",
         rol: usuario.rol,
@@ -107,9 +107,8 @@ const Usuarios = () => {
     } else {
       setEditingUser(null);
       form.reset();
-      // Si es coordinador, fijar su área
-      if (user?.rol === "coordinador" && user?.area?._id) {
-        form.setFieldValue("area", user.area.id);
+      if (user?.rol === "coordinador" && user?.Area?.id) {
+        form.setFieldValue("area", String(user.Area.id));
         form.setFieldValue("rol", "profesional");
       }
     }

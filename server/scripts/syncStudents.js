@@ -4,13 +4,10 @@ const http  = require('http');
 const { connectDB, sequelize } = require('../config/database');
 const { Estudiante } = require('../models/index');
 
-// URL de la API — mock por ahora, API real cuando esté disponible
 const API_BASE_URL = process.env.API_UNIVERSIDAD_URL || 'http://localhost:3000/api/mock';
-
-// Timeout en milisegundos — si la API no responde en 10s se aborta
 const TIMEOUT_MS = 10000;
 
-// Función para hacer GET con timeout
+// HTTP GET con soporte para Timeout
 function fetchConTimeout(url) {
   return new Promise((resolve, reject) => {
     const cliente = url.startsWith('https') ? https : http;
@@ -38,7 +35,7 @@ async function syncStudents() {
     await connectDB();
     console.log('✅ Conectado a PostgreSQL');
 
-    // Solicitar periodo
+    // Solicitar el periodo por consola
     const readline = require('readline');
     const rl = readline.createInterface({
       input:  process.stdin,
@@ -60,13 +57,11 @@ async function syncStudents() {
     console.log(`📅 Sincronizando para el periodo: ${periodo}`);
     console.log(`🌐 Consultando API: ${API_BASE_URL}/padron/${periodo}\n`);
 
-    // Consultar padrón a la API con timeout
     let respuesta;
     try {
       respuesta = await fetchConTimeout(`${API_BASE_URL}/padron/${periodo}`);
     } catch (error) {
       console.error('❌ Error al consultar la API universitaria:', error.message);
-      console.error('   Verifica que la API esté disponible y que API_UNIVERSIDAD_URL esté configurada');
       await sequelize.close();
       process.exit(1);
     }
@@ -86,56 +81,35 @@ async function syncStudents() {
       process.exit(0);
     }
 
-    // Sincronizar con PostgreSQL
     console.log('🔄 Sincronizando con PostgreSQL...\n');
 
-    let insertados   = 0;
-    let actualizados = 0;
-    let errores      = 0;
+    // Mapear y normalizar la estructura de datos
+    const estudiantesData = estudiantes.map(est => ({
+      nombre:              est.nombre,
+      tipo_identificacion: est.tipo_identificacion,
+      identificacion:      est.identificacion,
+      codigo_carnet:       est.codigo_carnet?.toUpperCase(),
+      email:               est.email?.toLowerCase(),
+      tipo_vinculacion:    est.tipo_vinculacion    || '',
+      facultad:            est.facultad            || '',
+      programa:            est.programa            || '',
+      sem:                 est.sem                 || '',
+      circunscripcion:     est.circunscripcion     || '',
+      periodo,
+      activo: true
+    }));
 
-    for (const est of estudiantes) {
-      try {
-        const estudianteData = {
-          nombre:              est.nombre,
-          tipo_identificacion: est.tipo_identificacion,
-          identificacion:      est.identificacion,
-          codigo_carnet:       est.codigo_carnet?.toUpperCase(),
-          email:               est.email?.toLowerCase(),
-          tipo_vinculacion:    est.tipo_vinculacion    || '',
-          facultad:            est.facultad            || '',
-          programa:            est.programa            || '',
-          sem:                 est.sem                 || '',
-          circunscripcion:     est.circunscripcion     || '',
-          periodo,
-          activo: true
-        };
-
-        // Verificar si ya existe
-        const existente = await Estudiante.findOne({
-          where: {
-            identificacion: estudianteData.identificacion,
-            periodo:        estudianteData.periodo
-          }
-        });
-
-        if (existente) {
-          await existente.update(estudianteData);
-          actualizados++;
-        } else {
-          await Estudiante.create(estudianteData);
-          insertados++;
-        }
-      } catch (error) {
-        console.error(`❌ Error con ${est.identificacion}:`, error.message);
-        errores++;
-      }
-    }
+    // Inserción masiva: Crea nuevos o actualiza si ya existen (Upsert)
+    const resultado = await Estudiante.bulkCreate(estudiantesData, {
+      updateOnDuplicate: [
+        'nombre', 'email', 'tipo_vinculacion',
+        'facultad', 'programa', 'sem', 
+        'circunscripcion', 'activo'
+      ]
+    });
 
     console.log('✅ Sincronización completada:');
-    console.log(`   Insertados:       ${insertados}`);
-    console.log(`   Actualizados:     ${actualizados}`);
-    console.log(`   Errores:          ${errores}`);
-    console.log(`   Total procesados: ${estudiantes.length}`);
+    console.log(`   Procesados (Totales): ${resultado.length}`);
 
     const totalEnDB = await Estudiante.count();
     console.log(`\n📈 Total de estudiantes en la base de datos: ${totalEnDB}`);

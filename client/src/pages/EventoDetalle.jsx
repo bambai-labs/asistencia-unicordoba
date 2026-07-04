@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Stack,
   Title,
@@ -21,185 +21,189 @@ import {
   ScrollArea,
   FileButton,
   Modal,
-  TextInput
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
+  TextInput,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import {
   IconArrowLeft,
   IconCalendar,
   IconClock,
   IconMapPin,
-  IconUsers,
   IconDownload,
   IconUpload,
   IconPhoto,
-  IconTrash
-} from '@tabler/icons-react'
-import { eventosService, asistenciaService, uploadService } from '../services/api'
-import { useAuth } from '../context/AuthContext'
-import dayjs from 'dayjs'
+  IconTrash,
+} from "@tabler/icons-react";
+import {
+  eventosService,
+  asistenciaService,
+  uploadService,
+} from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import dayjs from "dayjs";
 
 const EventoDetalle = () => {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const [evento, setEvento] = useState(null)
-  const [asistencias, setAsistencias] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [exportando, setExportando] = useState(false)
-  const [uploadingFoto, setUploadingFoto] = useState(false)
-  const [modalFotoOpened, { open: openModalFoto, close: closeModalFoto }] = useDisclosure(false)
-  const [nuevaFoto, setNuevaFoto] = useState({ url: '', descripcion: '' })
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [evento, setEvento] = useState(null);
+  const [asistencias, setAsistencias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [exportando, setExportando] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [modalFotoOpened, { open: openModalFoto, close: closeModalFoto }] =
+    useDisclosure(false);
+  const [nuevaFoto, setNuevaFoto] = useState({ url: "", descripcion: "" });
 
   useEffect(() => {
-    loadEvento()
-    loadAsistencias(true) // Mostrar loader en carga inicial
+    loadEvento();
+    loadAsistencias(true); // Mostrar loader en carga inicial
 
     // Actualizar asistencias cada 2 segundos sin loader
     const interval = setInterval(() => {
-      loadAsistencias(false) // No mostrar loader en actualizaciones automáticas
-    }, 2000)
+      loadAsistencias(false); // No mostrar loader en actualizaciones automáticas
+    }, 2000);
 
     // Limpiar intervalo al desmontar o cambiar evento
-    return () => clearInterval(interval)
-  }, [id])
+    return () => clearInterval(interval);
+  }, [id]);
 
   const loadEvento = async () => {
     try {
-      const data = await eventosService.getById(id)
-      setEvento(data.evento)
+      const data = await eventosService.getById(id);
+      setEvento(data.evento);
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'No se pudo cargar el evento',
-        color: 'red'
-      })
-      navigate('/eventos')
+        title: "Error",
+        message: "No se pudo cargar el evento",
+        color: "red",
+      });
+      navigate("/eventos");
     }
-  }
+  };
 
   const loadAsistencias = async (showLoader = true) => {
     try {
-      if (showLoader) setLoading(true)
-      const data = await asistenciaService.getByEvento(id)
-      setAsistencias(data.asistencias || [])
+      if (showLoader) setLoading(true);
+      const data = await asistenciaService.getByEvento(id);
+      setAsistencias(data.asistencias || []);
     } catch (error) {
-      console.error('Error loading asistencias:', error)
+      console.error("Error loading asistencias:", error);
     } finally {
-      if (showLoader) setLoading(false)
+      if (showLoader) setLoading(false);
     }
-  }
+  };
 
   const handleExportarExcel = async () => {
     try {
-      setExportando(true)
-      const blob = await asistenciaService.exportarExcel(id)
+      setExportando(true);
+      const blob = await asistenciaService.exportarExcel(id);
 
       // Crear link de descarga
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `asistencias_${evento.nombre.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `asistencias_${evento.nombre.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       notifications.show({
-        title: 'Éxito',
-        message: 'Asistencias exportadas correctamente',
-        color: 'green'
-      })
+        title: "Éxito",
+        message: "Asistencias exportadas correctamente",
+        color: "green",
+      });
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'No se pudo exportar las asistencias',
-        color: 'red'
-      })
+        title: "Error",
+        message: "No se pudo exportar las asistencias",
+        color: "red",
+      });
     } finally {
-      setExportando(false)
+      setExportando(false);
     }
-  }
+  };
 
   const handleUploadFoto = async (file) => {
     try {
-      setUploadingFoto(true)
-      const response = await uploadService.uploadImage(file)
-      setNuevaFoto({ ...nuevaFoto, url: response.url })
+      setUploadingFoto(true);
+      const response = await uploadService.uploadImage(file);
+      setNuevaFoto({ ...nuevaFoto, url: response.url });
       notifications.show({
-        title: 'Éxito',
-        message: 'Foto subida correctamente',
-        color: 'green'
-      })
+        title: "Éxito",
+        message: "Foto subida correctamente",
+        color: "green",
+      });
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'No se pudo subir la foto',
-        color: 'red'
-      })
+        title: "Error",
+        message: "No se pudo subir la foto",
+        color: "red",
+      });
     } finally {
-      setUploadingFoto(false)
+      setUploadingFoto(false);
     }
-  }
+  };
 
   const handleAddFoto = async () => {
     if (!nuevaFoto.url) {
       notifications.show({
-        title: 'Error',
-        message: 'Debes subir una foto primero',
-        color: 'red'
-      })
-      return
+        title: "Error",
+        message: "Debes subir una foto primero",
+        color: "red",
+      });
+      return;
     }
 
     try {
-      await eventosService.addFoto(id, nuevaFoto)
+      await eventosService.addFoto(id, nuevaFoto);
       notifications.show({
-        title: 'Éxito',
-        message: 'Foto de evidencia añadida correctamente',
-        color: 'green'
-      })
-      setNuevaFoto({ url: '', descripcion: '' })
-      closeModalFoto()
-      loadEvento()
+        title: "Éxito",
+        message: "Foto de evidencia añadida correctamente",
+        color: "green",
+      });
+      setNuevaFoto({ url: "", descripcion: "" });
+      closeModalFoto();
+      loadEvento();
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'No se pudo añadir la foto',
-        color: 'red'
-      })
+        title: "Error",
+        message: "No se pudo añadir la foto",
+        color: "red",
+      });
     }
-  }
+  };
 
   const handleDeleteFoto = async (fotoId) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta foto?')) {
-      return
+    if (!confirm("¿Estás seguro de que deseas eliminar esta foto?")) {
+      return;
     }
 
     try {
-      await eventosService.deleteFoto(id, foto.url)
+      await eventosService.deleteFoto(id, fotoId);
       notifications.show({
-        title: 'Éxito',
-        message: 'Foto eliminada correctamente',
-        color: 'green'
-      })
-      loadEvento()
+        title: "Éxito",
+        message: "Foto eliminada correctamente",
+        color: "green",
+      });
+      loadEvento();
     } catch (error) {
       notifications.show({
-        title: 'Error',
-        message: 'No se pudo eliminar la foto',
-        color: 'red'
-      })
+        title: "Error",
+        message: "No se pudo eliminar la foto",
+        color: "red",
+      });
     }
-  }
+  };
 
   if (!evento) {
     return (
       <Center h={400}>
         <Loader color="green" size="xl" />
       </Center>
-    )
+    );
   }
 
   return (
@@ -208,7 +212,7 @@ const EventoDetalle = () => {
         <Button
           variant="light"
           leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/eventos')}
+          onClick={() => navigate("/eventos")}
           size="sm"
         >
           Volver
@@ -250,7 +254,13 @@ const EventoDetalle = () => {
             </Grid.Col>
           )}
 
-          <Grid.Col span={{ base: 12, sm: evento.imagen_url ? 8 : 12, md: evento.imagen_url ? 9 : 12 }}>
+          <Grid.Col
+            span={{
+              base: 12,
+              sm: evento.imagen_url ? 8 : 12,
+              md: evento.imagen_url ? 9 : 12,
+            }}
+          >
             <Stack gap="xs">
               <Group justify="space-between" align="flex-start">
                 <div>
@@ -265,9 +275,9 @@ const EventoDetalle = () => {
                 </div>
                 <Group gap="xs">
                   {evento.area && (
-                    <Badge 
-                      color={evento.area.color || "cyan"} 
-                      size="md" 
+                    <Badge
+                      color={evento.area.color || "cyan"}
+                      size="md"
                       variant="filled"
                       style={{ backgroundColor: evento.area.color }}
                     >
@@ -279,8 +289,8 @@ const EventoDetalle = () => {
                       {evento.periodo}
                     </Badge>
                   )}
-                  <Badge color={evento.activo ? 'green' : 'gray'} size="md">
-                    {evento.activo ? 'Activo' : 'Inactivo'}
+                  <Badge color={evento.activo ? "green" : "gray"} size="md">
+                    {evento.activo ? "Activo" : "Inactivo"}
                   </Badge>
                   {evento.finalizado && (
                     <Badge color="blue" size="md">
@@ -298,8 +308,12 @@ const EventoDetalle = () => {
                     <IconCalendar size={16} />
                   </ThemeIcon>
                   <Box style={{ minWidth: 0 }}>
-                    <Text size="xs" c="dimmed">Fecha</Text>
-                    <Text size="sm" fw={500}>{dayjs(evento.fecha).format('DD/MM/YYYY')}</Text>
+                    <Text size="xs" c="dimmed">
+                      Fecha
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {dayjs(evento.fecha).format("DD/MM/YYYY")}
+                    </Text>
                   </Box>
                 </Group>
 
@@ -308,8 +322,12 @@ const EventoDetalle = () => {
                     <IconClock size={16} />
                   </ThemeIcon>
                   <Box style={{ minWidth: 0 }}>
-                    <Text size="xs" c="dimmed">Horario</Text>
-                    <Text size="sm" fw={500}>{evento.hora_inicio} - {evento.hora_fin}</Text>
+                    <Text size="xs" c="dimmed">
+                      Horario
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {evento.hora_inicio} - {evento.hora_fin}
+                    </Text>
                   </Box>
                 </Group>
 
@@ -318,27 +336,35 @@ const EventoDetalle = () => {
                     <IconMapPin size={16} />
                   </ThemeIcon>
                   <Box style={{ minWidth: 0 }}>
-                    <Text size="xs" c="dimmed">Lugar</Text>
-                    <Text size="sm" fw={500} lineClamp={1}>{evento.lugar}</Text>
+                    <Text size="xs" c="dimmed">
+                      Lugar
+                    </Text>
+                    <Text size="sm" fw={500} lineClamp={1}>
+                      {evento.lugar}
+                    </Text>
                   </Box>
                 </Group>
               </SimpleGrid>
 
-              {evento.creado_por && (
+              {evento.creador && (
                 <>
                   <Divider my="xs" />
                   <Group gap="xs">
-                    <Text size="xs" c="dimmed">Creado por:</Text>
-                    <Text size="sm" fw={500}>
-                      {evento.creado_por.nombre} {evento.creado_por.apellidos}
+                    <Text size="xs" c="dimmed">
+                      Creado por:
                     </Text>
-                    {evento.creado_por.area && (
-                      <Badge 
-                        size="xs" 
-                        color={evento.creado_por.area.color}
-                        style={{ backgroundColor: `${evento.creado_por.area.color}15` }}
+                    <Text size="sm" fw={500}>
+                      {evento.creador.nombre} {evento.creador.apellidos}
+                    </Text>
+                    {evento.creador.Area && (
+                      <Badge
+                        size="xs"
+                        color={evento.creador.Area.color}
+                        style={{
+                          backgroundColor: `${evento.creador.Area.color}15`,
+                        }}
                       >
-                        {evento.creado_por.area.nombre}
+                        {evento.creador.Area.nombre}
                       </Badge>
                     )}
                   </Group>
@@ -352,12 +378,20 @@ const EventoDetalle = () => {
       {/* Fotos de Evidencia */}
       {evento.fotos_evidencia && evento.fotos_evidencia.length > 0 && (
         <Card shadow="sm" padding="md" radius="md" withBorder>
-          <Title order={4} mb="md">Fotos de Evidencia</Title>
+          <Title order={4} mb="md">
+            Fotos de Evidencia
+          </Title>
           <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
             {evento.fotos_evidencia.map((foto, index) => (
-              <Card key={index} shadow="xs" padding="xs" withBorder style={{ height: '100%', position: 'relative' }}>
-                <Stack gap="xs" style={{ height: '100%' }}>
-                  <Box style={{ position: 'relative' }}>
+              <Card
+                key={index}
+                shadow="xs"
+                padding="xs"
+                withBorder
+                style={{ height: "100%", position: "relative" }}
+              >
+                <Stack gap="xs" style={{ height: "100%" }}>
+                  <Box style={{ position: "relative" }}>
                     <Image
                       src={foto.url}
                       alt={foto.descripcion || `Foto ${index + 1}`}
@@ -365,15 +399,15 @@ const EventoDetalle = () => {
                       fit="cover"
                       radius="md"
                     />
-                    {user?.rol === 'administrador' && (
+                    {user?.rol === "administrador" && (
                       <Button
                         size="xs"
                         color="red"
                         variant="filled"
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           top: 5,
-                          right: 5
+                          right: 5,
                         }}
                         onClick={() => handleDeleteFoto(foto.url)}
                       >
@@ -387,7 +421,7 @@ const EventoDetalle = () => {
                     </Text>
                   )}
                   <Text size="xs" c="dimmed">
-                    {dayjs(foto.fecha_subida).format('DD/MM/YYYY HH:mm')}
+                    {dayjs(foto.fecha_subida).format("DD/MM/YYYY HH:mm")}
                   </Text>
                 </Stack>
               </Card>
@@ -414,7 +448,13 @@ const EventoDetalle = () => {
           </Center>
         ) : (
           <ScrollArea>
-            <Table striped highlightOnHover horizontalSpacing="xs" verticalSpacing="xs" fontSize="sm">
+            <Table
+              striped
+              highlightOnHover
+              horizontalSpacing="xs"
+              verticalSpacing="xs"
+              fontSize="sm"
+            >
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th style={{ width: 50 }}>#</Table.Th>
@@ -429,7 +469,9 @@ const EventoDetalle = () => {
                   <Table.Tr key={asistencia.id}>
                     <Table.Td>{index + 1}</Table.Td>
                     <Table.Td>
-                      <Text size="sm" fw={500} lineClamp={1}>{asistencia.Estudiante?.nombre}</Text>
+                      <Text size="sm" fw={500} lineClamp={1}>
+                        {asistencia.Estudiante?.nombre}
+                      </Text>
                     </Table.Td>
                     <Table.Td>
                       <Badge variant="light" color="green" size="sm">
@@ -437,11 +479,15 @@ const EventoDetalle = () => {
                       </Badge>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="xs" lineClamp={1}>{asistencia.Estudiante?.email}</Text>
+                      <Text size="xs" lineClamp={1}>
+                        {asistencia.Estudiante?.email}
+                      </Text>
                     </Table.Td>
                     <Table.Td>
                       <Text size="xs">
-                        {dayjs(asistencia.fecha_registro).format('DD/MM/YYYY HH:mm:ss')}
+                        {dayjs(asistencia.fecha_registro).format(
+                          "DD/MM/YYYY HH:mm:ss",
+                        )}
                       </Text>
                     </Table.Td>
                   </Table.Tr>
@@ -488,21 +534,27 @@ const EventoDetalle = () => {
             label="Descripción (opcional)"
             placeholder="Descripción de la foto"
             value={nuevaFoto.descripcion}
-            onChange={(e) => setNuevaFoto({ ...nuevaFoto, descripcion: e.target.value })}
+            onChange={(e) =>
+              setNuevaFoto({ ...nuevaFoto, descripcion: e.target.value })
+            }
           />
 
           <Group justify="flex-end" mt="md">
             <Button variant="light" onClick={closeModalFoto}>
               Cancelar
             </Button>
-            <Button color="green" onClick={handleAddFoto} disabled={!nuevaFoto.url}>
+            <Button
+              color="green"
+              onClick={handleAddFoto}
+              disabled={!nuevaFoto.url}
+            >
               Añadir Foto
             </Button>
           </Group>
         </Stack>
       </Modal>
     </Stack>
-  )
-}
+  );
+};
 
-export default EventoDetalle
+export default EventoDetalle;

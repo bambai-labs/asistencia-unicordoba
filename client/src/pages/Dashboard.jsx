@@ -15,7 +15,6 @@ import {
   IconSchool,
   IconCalendarEvent,
   IconClipboardCheck,
-  IconUsers,
 } from "@tabler/icons-react";
 import { estudiantesService, eventosService } from "../services/api";
 

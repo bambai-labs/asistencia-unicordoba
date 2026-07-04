@@ -161,7 +161,7 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+    if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para ver eventos de otra área",
@@ -194,7 +194,7 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+    if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para actualizar eventos de otra área",
@@ -270,7 +270,7 @@ router.delete("/:id", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+    if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para eliminar eventos de otra área",
@@ -311,7 +311,7 @@ router.post("/:id/fotos", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+      if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para añadir fotos a eventos de otra área",
@@ -353,7 +353,7 @@ router.delete("/:id/fotos/:fotoIndex", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+    if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para eliminar fotos de eventos de otra área",

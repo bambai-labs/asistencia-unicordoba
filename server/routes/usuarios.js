@@ -13,35 +13,35 @@ router.post('/', esCoordinadorOSuperior, async (req, res) => {
     const { nombre, apellidos, cedula, cargo, area, usuario, contrasena, rol } = req.body;
 
     if (!nombre || !apellidos || !cedula || !cargo || !area || !usuario || !contrasena) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Todos los campos son requeridos' 
+      return res.status(400).json({
+        success: false,
+        message: 'Todos los campos son requeridos'
       });
     }
 
-    const areaExiste = await Area.findOne({ 
-      where: { id: area, activo: true } 
+    const areaExiste = await Area.findOne({
+      where: { id: area, activo: true }
     });
     if (!areaExiste) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Área no válida o inactiva' 
+      return res.status(400).json({
+        success: false,
+        message: 'Área no válida o inactiva'
       });
     }
 
     const existeUsuario = await Usuario.findOne({ where: { usuario } });
     if (existeUsuario) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'El usuario ya existe' 
+      return res.status(400).json({
+        success: false,
+        message: 'El usuario ya existe'
       });
     }
 
     const existeCedula = await Usuario.findOne({ where: { cedula } });
     if (existeCedula) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'La cédula ya está registrada' 
+      return res.status(400).json({
+        success: false,
+        message: 'La cédula ya está registrada'
       });
     }
 
@@ -50,15 +50,15 @@ router.post('/', esCoordinadorOSuperior, async (req, res) => {
 
     if (req.usuario.rol === 'coordinador') {
       if (rol && rol !== 'profesional') {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Los coordinadores solo pueden crear usuarios con rol de profesional' 
+        return res.status(403).json({
+          success: false,
+          message: 'Los coordinadores solo pueden crear usuarios con rol de profesional'
         });
       }
       if (parseInt(area) !== req.usuario.area_id) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Solo puedes crear usuarios en tu área' 
+        return res.status(403).json({
+          success: false,
+          message: 'Solo puedes crear usuarios en tu área'
         });
       }
       rolAsignado = 'profesional';
@@ -93,10 +93,10 @@ router.post('/', esCoordinadorOSuperior, async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al crear usuario', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error al crear usuario',
+      error: error.message
     });
   }
 });
@@ -119,7 +119,7 @@ router.get('/', async (req, res) => {
       where,
       attributes: { exclude: ['contrasena'] },
       include: [
-        { model: Area, as: 'Area', attributes: ['nombre', 'codigo', 'color'] }
+        { model: Area, as: 'Area', attributes: ['id', 'nombre', 'codigo', 'color'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -129,10 +129,10 @@ router.get('/', async (req, res) => {
       usuarios
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al obtener usuarios', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener usuarios',
+      error: error.message
     });
   }
 });
@@ -145,23 +145,23 @@ router.put('/:id', esCoordinadorOSuperior, async (req, res) => {
     const usuarioAActualizar = await Usuario.findByPk(req.params.id);
 
     if (!usuarioAActualizar) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Usuario no encontrado' 
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
       });
     }
 
     if (req.usuario.rol === 'coordinador') {
       if (usuarioAActualizar.area_id !== req.usuario.area_id || usuarioAActualizar.rol !== 'profesional') {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'No tienes permisos para actualizar este usuario' 
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permisos para actualizar este usuario'
         });
       }
       if (rol && rol !== 'profesional') {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'No puedes cambiar el rol del usuario' 
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes cambiar el rol del usuario'
         });
       }
     }
@@ -189,10 +189,10 @@ router.put('/:id', esCoordinadorOSuperior, async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al actualizar usuario', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar usuario',
+      error: error.message
     });
   }
 });
@@ -203,9 +203,9 @@ router.delete('/:id', esAdmin, async (req, res) => {
     const usuario = await Usuario.findByPk(req.params.id);
 
     if (!usuario) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Usuario no encontrado' 
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
       });
     }
 
@@ -217,10 +217,10 @@ router.delete('/:id', esAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al eliminar usuario', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar usuario',
+      error: error.message
     });
   }
 });

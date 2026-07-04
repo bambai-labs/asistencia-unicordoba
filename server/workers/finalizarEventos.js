@@ -38,9 +38,9 @@ const finalizarEventosWorker = async () => {
 };
 
 const iniciarWorker = () => {
-  console.log("🤖 Worker de finalización de eventos iniciado (cada 5 segundos)");
+  console.log("🤖 Worker de finalización de eventos iniciado (cada 60 segundos)");
   finalizarEventosWorker();
-  setInterval(finalizarEventosWorker, 5000);
+  setInterval(finalizarEventosWorker, 60000);
 };
 
 module.exports = { iniciarWorker, finalizarEventosWorker };

@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { Op, fn, col, literal } = require("sequelize");
-const { sequelize } = require("../config/database");
+const { Op, fn, col } = require("sequelize");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
@@ -11,7 +10,7 @@ dayjs.extend(timezone);
 
 const COLOMBIA_TZ = "America/Bogota";
 
-const ExcelJS    = require("exceljs");
+const ExcelJS = require("exceljs");
 const { Asistencia, Estudiante, Evento, Usuario, Area } = require('../models/index');
 const { verificarToken } = require("../middleware/auth");
 
@@ -43,7 +42,7 @@ router.post("/registrar-qr", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+    if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para tomar asistencia en eventos de otra área",
@@ -60,8 +59,8 @@ router.post("/registrar-qr", async (req, res) => {
     const estudiante = await Estudiante.findOne({
       where: {
         codigo_carnet: codigo_carnet.toUpperCase(),
-        periodo:       evento.periodo,
-        activo:        true
+        periodo: evento.periodo,
+        activo: true
       }
     });
 
@@ -76,7 +75,7 @@ router.post("/registrar-qr", async (req, res) => {
 
     const asistenciaExistente = await Asistencia.findOne({
       where: {
-        evento_id:     evento_id,
+        evento_id: evento_id,
         estudiante_id: estudiante.id
       }
     });
@@ -91,12 +90,12 @@ router.post("/registrar-qr", async (req, res) => {
     }
 
     const nuevaAsistencia = await Asistencia.create({
-      evento_id:               evento_id,
-      estudiante_id:           estudiante.id,
+      evento_id: evento_id,
+      estudiante_id: estudiante.id,
       codigo_carnet_escaneado: codigo_carnet.toUpperCase(),
-      tipo_registro:           "manual_qr",
-      registrado_por_id:       req.usuario.id,
-      fecha_registro:          dayjs().toDate(),
+      tipo_registro: "manual_qr",
+      registrado_por_id: req.usuario.id,
+      fecha_registro: dayjs().toDate(),
     });
 
     res.json({
@@ -104,8 +103,8 @@ router.post("/registrar-qr", async (req, res) => {
       message: "Asistencia registrada exitosamente",
       asistencia: nuevaAsistencia,
       estudiante: {
-        nombre:         estudiante.nombre,
-        codigo:         estudiante.codigo_carnet,
+        nombre: estudiante.nombre,
+        codigo: estudiante.codigo_carnet,
         identificacion: estudiante.identificacion,
       },
     });
@@ -144,7 +143,7 @@ router.post("/registrar-manual", async (req, res) => {
       });
     }
 
-    if (req.usuario.rol === "coordinador" && evento.area_id !== req.usuario.area_id) {
+    if (req.usuario.rol === "coordinador" && parseInt(evento.area_id) !== parseInt(req.usuario.area_id)) {
       return res.status(403).json({
         success: false,
         message: "No tienes permisos para tomar asistencia en eventos de otra área",
@@ -161,8 +160,8 @@ router.post("/registrar-manual", async (req, res) => {
     const estudiante = await Estudiante.findOne({
       where: {
         identificacion: identificacion.toString(),
-        periodo:        evento.periodo,
-        activo:         true
+        periodo: evento.periodo,
+        activo: true
       }
     });
 
@@ -177,7 +176,7 @@ router.post("/registrar-manual", async (req, res) => {
 
     const asistenciaExistente = await Asistencia.findOne({
       where: {
-        evento_id:     evento.id,
+        evento_id: evento.id,
         estudiante_id: estudiante.id
       }
     });
@@ -187,8 +186,8 @@ router.post("/registrar-manual", async (req, res) => {
         success: false,
         message: "Este estudiante ya está registrado en este evento",
         estudiante: {
-          nombre:         estudiante.nombre,
-          codigo_carnet:  estudiante.codigo_carnet,
+          nombre: estudiante.nombre,
+          codigo_carnet: estudiante.codigo_carnet,
           identificacion: estudiante.identificacion,
         },
         fecha_registro_anterior: asistenciaExistente.fecha_registro,
@@ -196,11 +195,11 @@ router.post("/registrar-manual", async (req, res) => {
     }
 
     const asistencia = await Asistencia.create({
-      evento_id:               evento.id,
-      estudiante_id:           estudiante.id,
+      evento_id: evento.id,
+      estudiante_id: estudiante.id,
       codigo_carnet_escaneado: estudiante.codigo_carnet,
-      tipo_registro:           "manual_documento",
-      registrado_por_id:       req.usuario.id,
+      tipo_registro: "manual_documento",
+      registrado_por_id: req.usuario.id,
     });
 
     console.log(`✅ Asistencia manual registrada: ${estudiante.nombre} — ${evento.nombre}`);
@@ -211,10 +210,10 @@ router.post("/registrar-manual", async (req, res) => {
       asistencia: {
         id: asistencia.id,
         estudiante: {
-          nombre:         estudiante.nombre,
-          codigo_carnet:  estudiante.codigo_carnet,
+          nombre: estudiante.nombre,
+          codigo_carnet: estudiante.codigo_carnet,
           identificacion: estudiante.identificacion,
-          email:          estudiante.email,
+          email: estudiante.email,
         },
         evento: { nombre: evento.nombre, fecha: evento.fecha },
         fecha_registro: asistencia.fecha_registro,
@@ -244,7 +243,7 @@ router.get("/eventos-activos", async (req, res) => {
     const eventos = await Evento.findAll({
       where,
       include: [
-        { model: Area,    as: 'Area',    attributes: ['nombre', 'codigo', 'color'] },
+        { model: Area, as: 'Area', attributes: ['nombre', 'codigo', 'color'] },
         { model: Usuario, as: 'creador', attributes: ['nombre', 'apellidos', 'usuario'] }
       ],
       order: [['fecha', 'DESC'], ['hora_inicio', 'DESC']]
@@ -264,9 +263,9 @@ router.get("/eventos-activos", async (req, res) => {
 router.get("/evento/:eventoId", async (req, res) => {
   try {
     const asistencias = await Asistencia.findAll({
-      where:   { evento_id: req.params.eventoId },
+      where: { evento_id: req.params.eventoId },
       include: [{ model: Estudiante, as: 'Estudiante' }],
-      order:   [['fecha_registro', 'DESC']]
+      order: [['fecha_registro', 'DESC']]
     });
 
     res.json({ success: true, count: asistencias.length, asistencias });
@@ -300,7 +299,7 @@ router.get("/evento/:eventoId/estadisticas", async (req, res) => {
     res.json({
       success: true,
       estadisticas: {
-        total:    totalAsistencias,
+        total: totalAsistencias,
         por_hora: asistenciasPorHora,
       },
     });
@@ -317,9 +316,9 @@ router.get("/evento/:eventoId/estadisticas", async (req, res) => {
 router.get("/estudiante/:estudianteId", async (req, res) => {
   try {
     const asistencias = await Asistencia.findAll({
-      where:   { estudiante_id: req.params.estudianteId },
+      where: { estudiante_id: req.params.estudianteId },
       include: [{ model: Evento, as: 'Evento' }],
-      order:   [['fecha_registro', 'DESC']]
+      order: [['fecha_registro', 'DESC']]
     });
 
     res.json({ success: true, count: asistencias.length, asistencias });
@@ -362,38 +361,38 @@ router.get("/evento/:eventoId/exportar", async (req, res) => {
     }
 
     const asistencias = await Asistencia.findAll({
-      where:   { evento_id: req.params.eventoId },
+      where: { evento_id: req.params.eventoId },
       include: [{ model: Estudiante, as: 'Estudiante' }],
-      order:   [['fecha_registro', 'ASC']]
+      order: [['fecha_registro', 'ASC']]
     });
 
-    const workbook  = new ExcelJS.Workbook();
+    const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Asistencias");
 
     worksheet.columns = [
-      { header: "NOMBRES Y APELLIDOS",    key: "nombre",          width: 40 },
-      { header: "DOCUMENTO DE IDENTIDAD", key: "identificacion",  width: 20 },
-      { header: "TIPO DE VINCULACION",    key: "tipo_vinculacion", width: 25 },
-      { header: "FACULTAD",               key: "facultad",         width: 30 },
-      { header: "NOMBRE_PROGRAMA",        key: "programa",         width: 40 },
-      { header: "SEM",                    key: "sem",              width: 10 },
-      { header: "CIRCUNSCRIPCION",        key: "circunscripcion",  width: 25 },
+      { header: "NOMBRES Y APELLIDOS", key: "nombre", width: 40 },
+      { header: "DOCUMENTO DE IDENTIDAD", key: "identificacion", width: 20 },
+      { header: "TIPO DE VINCULACION", key: "tipo_vinculacion", width: 25 },
+      { header: "FACULTAD", key: "facultad", width: 30 },
+      { header: "NOMBRE_PROGRAMA", key: "programa", width: 40 },
+      { header: "SEM", key: "sem", width: 10 },
+      { header: "CIRCUNSCRIPCION", key: "circunscripcion", width: 25 },
     ];
 
-    worksheet.getRow(1).font      = { bold: true, size: 12 };
-    worksheet.getRow(1).fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4CAF50" } };
+    worksheet.getRow(1).font = { bold: true, size: 12 };
+    worksheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4CAF50" } };
     worksheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
 
     asistencias.forEach((asistencia) => {
       const est = asistencia.Estudiante;
       if (est) {
         worksheet.addRow({
-          nombre:          est.nombre          || "",
-          identificacion:  est.identificacion  || "",
+          nombre: est.nombre || "",
+          identificacion: est.identificacion || "",
           tipo_vinculacion: est.tipo_vinculacion || "",
-          facultad:        est.facultad        || "",
-          programa:        est.programa        || "",
-          sem:             est.sem             || "",
+          facultad: est.facultad || "",
+          programa: est.programa || "",
+          sem: est.sem || "",
           circunscripcion: est.circunscripcion || "",
         });
       }
@@ -402,10 +401,10 @@ router.get("/evento/:eventoId/exportar", async (req, res) => {
     worksheet.eachRow({ includeEmpty: false }, (row) => {
       row.eachCell({ includeEmpty: true }, (cell) => {
         cell.border = {
-          top:    { style: "thin" },
-          left:   { style: "thin" },
+          top: { style: "thin" },
+          left: { style: "thin" },
           bottom: { style: "thin" },
-          right:  { style: "thin" },
+          right: { style: "thin" },
         };
       });
     });
