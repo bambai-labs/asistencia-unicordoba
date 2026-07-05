@@ -489,20 +489,25 @@ const Eventos = () => {
                     </Table.Td>
                   )}
                   <Table.Td>
-                    <Stack gap={4}>
+                    <Table.Td>
                       <Badge
-                        color={evento.activo ? "green" : "gray"}
+                        color={
+                          evento.finalizado
+                            ? "blue"
+                            : evento.activo
+                              ? "green"
+                              : "gray"
+                        }
                         variant="light"
                         size="xs"
                       >
-                        {evento.activo ? "Activo" : "Inactivo"}
+                        {evento.finalizado
+                          ? "Finalizado"
+                          : evento.activo
+                            ? "Activo"
+                            : "Inactivo"}
                       </Badge>
-                      {evento.finalizado && (
-                        <Badge color="blue" variant="light" size="xs">
-                          Finalizado
-                        </Badge>
-                      )}
-                    </Stack>
+                    </Table.Td>
                   </Table.Td>
                   <Table.Td>
                     <Group gap="xs" wrap="nowrap">

@@ -289,14 +289,22 @@ const EventoDetalle = () => {
                       {evento.periodo}
                     </Badge>
                   )}
-                  <Badge color={evento.activo ? "green" : "gray"} size="md">
-                    {evento.activo ? "Activo" : "Inactivo"}
+                  <Badge
+                    color={
+                      evento.finalizado
+                        ? "blue"
+                        : evento.activo
+                          ? "green"
+                          : "gray"
+                    }
+                    size="md"
+                  >
+                    {evento.finalizado
+                      ? "Finalizado"
+                      : evento.activo
+                        ? "Activo"
+                        : "Inactivo"}
                   </Badge>
-                  {evento.finalizado && (
-                    <Badge color="blue" size="md">
-                      Finalizado
-                    </Badge>
-                  )}
                 </Group>
               </Group>
 
